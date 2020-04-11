@@ -1,5 +1,6 @@
 import Game from './entry.js';
 import _ from './example.js';
+//import _ from './example-cannon.js';
 
 const game = new Game();
 

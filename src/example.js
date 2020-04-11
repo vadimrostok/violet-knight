@@ -1,4 +1,7 @@
 import * as THREE from 'three';
+import throttle from 'lodash/throttle';
+
+window.THREE = THREE;
 
 //import Stats from './jsm/libs/stats.module.js';
 
@@ -32,10 +35,8 @@ var broadphase;
 var solver;
 var physicsWorld;
 var dynamicObjects = [];
+window.dynamicObjects =dynamicObjects;
 var transformAux1;
-
-var heightData = null;
-var ammoHeightData = null;
 
 var time = 0;
 var objectTimePeriod = 3;
@@ -57,11 +58,7 @@ if (typeof window.Ammo === 'function') {
 
 function init() {
 
-  heightData = generateHeight( terrainWidth, terrainDepth, terrainMinHeight, terrainMaxHeight );
-
   initGraphics();
-
-  //initPhysics();
 
 }
 
@@ -70,32 +67,31 @@ function initGraphics() {
   container = document.getElementById( 'container' );
 
   renderer = new THREE.WebGLRenderer();
+  renderer.shadowMapEnabled = true;
   renderer.setPixelRatio( window.devicePixelRatio );
   renderer.setSize( window.innerWidth, window.innerHeight );
   renderer.shadowMap.enabled = true;
   container.appendChild( renderer.domElement );
-
-  // stats = new Stats();
-  // stats.domElement.style.position = 'absolute';
-  // stats.domElement.style.top = '0px';
-  // container.appendChild( stats.domElement );
 
   camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.2, 2000 );
 
   scene = new THREE.Scene();
   scene.background = new THREE.Color( 0xbfd1e5 );
 
-  camera.position.y = 100;
+  camera.position.y = 70;
+  camera.position.x = 70;
 
-  camera.position.z = terrainDepthExtents / 2;
+  camera.position.z = 70;
   camera.lookAt( 0, 0, 0 );
 
   var controls = new OrbitControls( camera, renderer.domElement );
 
+  window.controls = controls;
+
 
 
   var manager = new THREE.LoadingManager();
-  var material = new THREE.MeshPhongMaterial( { color: 0xff5533, specular: 0x111111, shininess: 200 } );
+  var material = new THREE.MeshPhysicalMaterial( { color: 0xff5533, specular: 0x111111, shininess: 200 } );
   var material2 = new THREE.LineDashedMaterial( {
     color: 0xff0000,
     linewidth: 1,
@@ -117,28 +113,20 @@ function initGraphics() {
       //material.side = THREE.DoubleSide;
       mesh.material = material;
 
-      // var points = [];
-      // points.push( new THREE.Vector3( - 10, 0, 0 ) );
-      // points.push( new THREE.Vector3( 0, 10, 0 ) );
-      // points.push( new THREE.Vector3( 10, 0, 0 ) );
-
-      // var g2 = new THREE.BufferGeometry();
-      // console.log('g2', g2);
-      // g2.attributes.position = new THREE.BufferAttribute( mesh.geometry.attributes.position.array, 3 );
-
-      // var line = new THREE.Line( g2, material2 );
-      // line.scale.set( 15, 15, 15 );
-      // scene.add( line );
-      // console.log('line', line);
-
-      //object.position.set( 0, - 2, 0.6 );
-      //object.rotation.set( 0, - Math.PI / 2, 0 );
       console.log('1=', mesh.geometry.attributes.position.array[0]);
-      mesh.geometry.scale( 15, 15, 15 );
+      mesh.geometry.scale( 1.3, 1.3, 1.3 );
+      // let angle = -0.03;
+      // mesh.geometry.rotateX(angle);
+      // window.setTimeout(() => {
+      //   window.setInterval(() => {
+      //     angle += 0.03;
+      //     mesh.geometry.rotateX(angle);
+      //   }, 1000);
+      // }, 3000);
       //mesh.geometry.translate(0,-20,0);
       console.log('2=', mesh.geometry.attributes.position.array[0]);
       //object.scale.set( 15, 15, 15 );
-      object.position.set(0,3,0);
+      object.position.set(0,0,0);
 
       mesh.geometry.rotateX( Math.PI);
       //object.rotateX( Math.PI / 2 );
@@ -178,77 +166,6 @@ function initGraphics() {
 
     });
 
-
-  // var loader = new STLLoader();
-  // loader.load( './stl/one.stl', function ( geometry ) {
-
-  //   var material = new THREE.MeshPhongMaterial( { color: 0xff5533, specular: 0x111111, shininess: 200 } );
-  //   var mesh = new THREE.Mesh( geometry, material );
-
-  //   console.log('geo', geometry, mesh);
-
-  //   mesh.position.set( 0, - 0.25, 0.6 );
-  //   mesh.rotation.set( 0, - Math.PI / 2, 0 );
-  //   mesh.scale.set( 15, 15, 15 );
-
-  //   mesh.rotateX( Math.PI / 2 );
-
-  //   mesh.castShadow = true;
-  //   mesh.receiveShadow = true;
-
-  //   scene.add( mesh );
-
-  // } );
-
-
-
-
-
-
-
-
-
-
-  // var geometry = new THREE.PlaneBufferGeometry( terrainWidthExtents, terrainDepthExtents, terrainWidth - 1, terrainDepth - 1 );
-  // geometry.rotateX( - Math.PI / 2 );
-
-  // var vertices = geometry.attributes.position.array;
-
-  // for ( var i = 0, j = 0, l = vertices.length; i < l; i ++, j += 3 ) {
-
-  //   // j + 1 because it is the y component that we modify
-  //   vertices[ j + 1 ] = heightData[ i ];
-
-  // }
-
-  // geometry.computeVertexNormals();
-
-  // var groundMaterial = new THREE.MeshPhongMaterial( { color: 0xC7C7C7 } );
-  // terrainMesh = new THREE.Mesh( geometry, groundMaterial );
-  // terrainMesh.receiveShadow = true;
-  // terrainMesh.castShadow = true;
-
-  // scene.add( terrainMesh );
-
-
-
-
-
-
-  // var textureLoader = new THREE.TextureLoader();
-  // textureLoader.load( "textures/grid.png", function ( texture ) {
-
-  //   texture.wrapS = THREE.RepeatWrapping;
-  //   texture.wrapT = THREE.RepeatWrapping;
-  //   texture.repeat.set( terrainWidth - 1, terrainDepth - 1 );
-  //   groundMaterial.map = texture;
-  //   groundMaterial.needsUpdate = true;
-
-  // } );
-
-  var light2 = new THREE.AmbientLight( 0x404040 ); // soft white light
-  scene.add( light2 );
-
   var light = new THREE.DirectionalLight( 0xffffff, 1 );
   light.position.set( 100, 100, 50 );
   light.castShadow = true;
@@ -280,6 +197,9 @@ function onWindowResize() {
   renderer.setSize( window.innerWidth, window.innerHeight );
 
 }
+let groundPhysicsBody;
+let ground;
+let hinge;
 
 function initPhysics(mesh) {
 
@@ -290,116 +210,16 @@ function initPhysics(mesh) {
   broadphase = new Ammo.btDbvtBroadphase();
   solver = new Ammo.btSequentialImpulseConstraintSolver();
   physicsWorld = new Ammo.btDiscreteDynamicsWorld( dispatcher, broadphase, solver, collisionConfiguration );
-  physicsWorld.setGravity( new Ammo.btVector3( 0, - 6, 0 ) );
+  physicsWorld.setGravity( new Ammo.btVector3( 0, 0, 0 ) );
 
   // Create the terrain body
 
-  var groundShape = createTerrainShape(mesh);
-  var groundTransform = new Ammo.btTransform();
-  groundTransform.setIdentity();
-  // Shifts the terrain, since bullet re-centers it on its bounding box.
-  groundTransform.setOrigin( new Ammo.btVector3( 0, ( terrainMaxHeight + terrainMinHeight ) / 2, 0 ) );
-  var groundMass = 0;
-  var groundLocalInertia = new Ammo.btVector3( 0, 0, 0 );
-  var groundMotionState = new Ammo.btDefaultMotionState( groundTransform );
-  var groundBody = new Ammo.btRigidBody( new Ammo.btRigidBodyConstructionInfo( groundMass, groundMotionState, groundShape, groundLocalInertia ) );
-  physicsWorld.addRigidBody( groundBody );
-
-  transformAux1 = new Ammo.btTransform();
-
-}
-
-function generateHeight( width, depth, minHeight, maxHeight ) {
-
-  // Generates the height data (a sinus wave)
-
-  var size = width * depth;
-  var data = new Float32Array( size );
-
-  var hRange = maxHeight - minHeight;
-  var w2 = width / 2;
-  var d2 = depth / 2;
-  var phaseMult = 12;
-
-  var p = 0;
-  for ( var j = 0; j < depth; j ++ ) {
-
-    for ( var i = 0; i < width; i ++ ) {
-
-      var radius = Math.sqrt(
-	Math.pow( ( i - w2 ) / w2, 2.0 ) +
-	  Math.pow( ( j - d2 ) / d2, 2.0 ) );
-
-      var height = ( Math.sin( radius * phaseMult ) + 1 ) * 0.5 * hRange + minHeight;
-
-      data[ p ] = height;
-
-      p ++;
-
-    }
-
-  }
-
-  return data;
-
-}
-
-function createTerrainShape(mesh) {
-
-  // This parameter is not really used, since we are using PHY_FLOAT height data type and hence it is ignored
-  var heightScale = 1;
-
-  // Up axis = 0 for X, 1 for Y, 2 for Z. Normally 1 = Y is used.
-  var upAxis = 1;
-
-  // hdt, height data type. "PHY_FLOAT" is used. Possible values are "PHY_FLOAT", "PHY_UCHAR", "PHY_SHORT"
-  var hdt = "PHY_FLOAT";
-
-  // Set this to your needs (inverts the triangles)
-  var flipQuadEdges = false;
-
-  // Creates height data buffer in Ammo heap
-  //  console.log('mesh', mesh, mesh.geometry.attributes.position.array);
-  
-  const pointsCount = mesh.geometry.attributes.position.array/3;
-  ammoHeightData = Ammo._malloc( 4 * terrainWidth * terrainDepth );
-  //ammoHeightData = Ammo._malloc( 4 * width * terrainDepth );
-
-  // Copy the javascript height data array to the Ammo one.
-  var p = 0;
-  var p2 = 0;
-  for ( var j = 0; j < terrainDepth; j ++ ) {
-
-    for ( var i = 0; i < terrainWidth; i ++ ) {
-
-      // write 32-bit float data to memory
-      Ammo.HEAPF32[ ammoHeightData + p2 >> 2 ] = heightData[ p ];
-
-      p ++;
-
-      // 4 bytes/float
-      p2 += 4;
-
-    }
-
-  }
-
-
+  //var groundShape = createTerrainShape(mesh);
 
   var ammoMesh = new Ammo.btTriangleMesh(true, true);
-  // ammoMesh.addTriangle(
-  //   new Ammo.btVector3(0, 0, 0),
-  //   new Ammo.btVector3(1, 0, 0),
-  //   new Ammo.btVector3(0, 1, 0),
-  //   false
-  // );
-
-  //console.log('mesh', mesh);
-  //var newShape = new Ammo.btConvexHullShape();
+  window.ammoMesh = ammoMesh;
+  console.log('ammoMesh', ammoMesh);
   const arr = mesh.geometry.attributes.position.array;
-  // for (let i = 0, l = arr.length/3; i < l; i++) {
-  //   newShape.addPoint(new Ammo.btVector3(arr[i*3], arr[i*3+1], arr[i*3+2]));
-  // }
 
   for (let i = 0, l = arr.length/9; i < l; i++) {
     ammoMesh.addTriangle(
@@ -409,43 +229,45 @@ function createTerrainShape(mesh) {
       false
     );    
   }
-  // var scaleX = 15;
-  // var scaleZ = 15;
-  // var scaleY = 15;
-  // newShape.setLocalScaling( new Ammo.btVector3( scaleX, scaleY, scaleZ ) );
+
+  var groundShape = new Ammo.btBvhTriangleMeshShape(ammoMesh, true, true);
+
+  var groundTransform = new Ammo.btTransform();
+  groundTransform.setIdentity();
+  // Shifts the terrain, since bullet re-centers it on its bounding box.
+  groundTransform.setOrigin( new Ammo.btVector3( 0, 0, 0 ) );
+  var groundMass = 0;
+  var groundLocalInertia = new Ammo.btVector3( 100000, 100000, 100000 );
+  var groundMotionState = new Ammo.btDefaultMotionState( groundTransform );
+  var groundBody = new Ammo.btRigidBody( new Ammo.btRigidBodyConstructionInfo( groundMass, groundMotionState, groundShape, groundLocalInertia ) );
+
+  physicsWorld.addRigidBody( groundBody );
+
+  groundBody.setGravity(new Ammo.btVector3( 0, 0, 0 ));
+
+  mesh.userData.physicsBody = groundBody;
+  ground = mesh;
+  groundPhysicsBody = groundBody;
+  ground = mesh;
+  window.ground = mesh;
+
+  dynamicObjects.push(mesh);
+
+  //ground.userData.physicsBody.setLinearVelocity(new Ammo.btVector3(0.5,0,0));
+
+  //ground.userData.physicsBody.setAngularVelocity(new Ammo.btVector3(1.5,0,0));
+  // setTimeout(() => { ground.userData.physicsBody.setAngularVelocity(new Ammo.btVector3(0.5,0,0)); }, 1000);
+
+  transformAux1 = new Ammo.btTransform();
 
 
-  var newShape = new Ammo.btBvhTriangleMeshShape(ammoMesh, true, true);
 
-  //newShape.setMargin( 0.05 );
-  return newShape;
-
-
-
-
-
-
-  // Creates the heightfield physics shape
-  var heightFieldShape = new Ammo.btHeightfieldTerrainShape(
-    terrainWidth,
-    terrainDepth,
-    ammoHeightData,
-    heightScale,
-    terrainMinHeight,
-    terrainMaxHeight,
-    upAxis,
-    hdt,
-    flipQuadEdges
-  );
-
-  // Set horizontal scale
-  var scaleX = terrainWidthExtents / ( terrainWidth - 1 );
-  var scaleZ = terrainDepthExtents / ( terrainDepth - 1 );
-  heightFieldShape.setLocalScaling( new Ammo.btVector3( scaleX, 1, scaleZ ) );
-
-  heightFieldShape.setMargin( 0.05 );
-
-  return heightFieldShape;
+  // Hinge constraint to move the arm
+  // var pivotA = new Ammo.btVector3( 0, 0.5, 0 );
+  // var pivotB = new Ammo.btVector3( 0, -0.5, 0 );
+  // var axis = new Ammo.btVector3( 0, 1, 0 );
+  // hinge = new Ammo.btHingeConstraint( pylon.userData.physicsBody, arm.userData.physicsBody, pivotA, pivotB, axis, axis, true );
+  // physicsWorld.addConstraint( hinge, true );
 
 }
 
@@ -464,10 +286,10 @@ function generateObject() {
   shape = new Ammo.btSphereShape( radius );
   shape.setMargin( margin );
 
-  threeObject.position.set( -terrainWidth/8, terrainMaxHeight + objectSize + 20, terrainDepth/8 );
+  threeObject.position.set( -10, 30, 10 );
 
-  var mass = objectSize * 5;
-  var localInertia = new Ammo.btVector3( 0, 0, 0 );
+  var mass = 0.001;
+  var localInertia = new Ammo.btVector3( 1, 1, 1 );
   shape.calculateLocalInertia( mass, localInertia );
   var transform = new Ammo.btTransform();
   transform.setIdentity();
@@ -489,19 +311,14 @@ function generateObject() {
 }
 
 function createObjectMaterial() {
-
   var c = Math.floor( Math.random() * ( 1 << 24 ) );
   return new THREE.MeshPhongMaterial( { color: c } );
-
 }
 
 function animate() {
-
   requestAnimationFrame( animate );
 
   render();
-  //stats.update();
-
 }
 
 let deltaTime;
@@ -518,15 +335,142 @@ function render() {
 
 }
 
+let shift = 0;
+
+let moveLeft = false;
+let speed = 0;
+let moveRight = false;
+
+
+//let ammoTmpPos = null, ammoTmpQuat = null;
+
+// const updateAngularVelocity = throttle(() => {
+//   console.log('updateAngularVelocity', speed*(moveLeft?-1:1));
+//   ground.userData.physicsBody.setAngularVelocity(new Ammo.btVector3(moveLeft?-1:1,0,0));
+// }, 500);
+const updateAngularVelocity = () => {
+  let speed = 0;
+  if (moveLeft) {
+    speed = -1;
+  } else if (moveRight) {
+    speed = 1;
+  }
+  console.log('setAngularVelocity', speed);
+  ground.userData.physicsBody.setAngularVelocity(new Ammo.btVector3(speed,0,0));
+  ground.userData.physicsBody.setAngularFactor(1);
+};
+
+let angle = 0;
+window.addEventListener( 'keydown', function ( event ) {
+  let ret = false;
+  switch ( event.keyCode ) {
+    case 88://x
+      //physicsWorld.setGravity( new Ammo.btVector3( 0, 6, 0 ) );
+      console.log('apply');
+      // const impulse = new Ammo.btVector3(1000,50,0);
+      // const rel_pos = new Ammo.btVector3(10,10,10);
+      // ground.userData.physicsBody.applyImpulse(impulse, rel_pos);
+      break;
+    case 66://b
+      generateObject();
+      break;
+    case 67://c
+      moveLeft = true;
+      break;
+    case 86://v
+      moveRight = true;
+      break;
+    default:
+      ret = true;
+  }
+  if (ret) {
+    return;
+  }
+  //updateAngularVelocity();
+}, false );
+window.addEventListener( 'keyup', function ( event ) {
+  //speed = 3;
+  if (moveLeft || moveRight) {
+    moveLeft = false;
+    moveRight = false;
+    //updateAngularVelocity(); 
+  }
+}, false );
+
+
+
+let firstRun = true;
+let tmpPos, tmpQuat, ammoTmpPos, ammoTmpQuat, tmpTrans;
+//tmpQuat;
+const setGravityByCamera = throttle((polarAngle, azimuthalAngle) => {
+  const polarGravity = polarAngle - Math.PI/2;
+  //console.log(polarGravity);
+  console.log(
+    -(Math.sin(azimuthalAngle)*5).toFixed(2),
+    (polarGravity*5).toFixed(2),
+    -(Math.cos(azimuthalAngle)*5).toFixed(2)
+  );
+  physicsWorld.setGravity( new Ammo.btVector3( -Math.sin(azimuthalAngle), polarGravity, -Math.cos(azimuthalAngle) ) );
+}, 250);
+
 function updatePhysics( deltaTime ) {
+  if (firstRun) {
+    console.log('call on initial run');
+    //ground.userData.physicsBody.setAngularVelocity(new Ammo.btVector3(-1, 0, 0));
+
+    tmpTrans = new Ammo.btTransform();
+
+    ammoTmpPos = new Ammo.btVector3(0,0,0);
+    ammoTmpQuat = new Ammo.btQuaternion(0,0,0,1);
+    tmpPos = new THREE.Vector3();
+    window.tmpQuat = tmpQuat = new THREE.Quaternion();
+
+    //let translateFactor = tmpPos.set(moveX, moveY, moveZ);
+
+    firstRun = false;
+  }
+
+  if (moveLeft) {
+    angle -= deltaTime*10;
+  }
+  if (moveRight) {
+    angle += deltaTime*10;
+  }
+
+  const polarAngle = window.controls.getPolarAngle();
+  const azimuthalAngle = window.controls.getAzimuthalAngle();
+  setGravityByCamera(polarAngle, azimuthalAngle);
+
+  //setFromAxisAngle( new THREE.Vector3( 0, 1, 0 ), Math.PI / 2 );
+
+  //ground.rotateX(Math.sin(shift));
+  ground.rotation.set(angle,0,0);
+  ground.getWorldQuaternion(tmpQuat);
+  //ammoTmpQuat.setValue( q.x, q.y, q.z, q.w);
+
+  // ground.getWorldQuaternion(tmpQuat);
+  ammoTmpQuat.setValue( tmpQuat.x, tmpQuat.y, tmpQuat.z, tmpQuat.w);
+
+
+  const groundMs = ground.userData.physicsBody.getMotionState();
+
+  tmpTrans.setIdentity();
+  tmpTrans.setOrigin( ammoTmpPos ); 
+  tmpTrans.setRotation( ammoTmpQuat );
+
+  ground.userData.physicsBody.setWorldTransform(tmpTrans);
+  groundMs.setWorldTransform(tmpTrans);
 
   physicsWorld.stepSimulation( deltaTime*3, 10 );
+
+  shift += deltaTime*0.1;
 
   // Update objects
   for ( var i = 0, il = dynamicObjects.length; i < il; i ++ ) {
 
     var objThree = dynamicObjects[ i ];
     var objPhys = objThree.userData.physicsBody;
+    objPhys.activate();
     var ms = objPhys.getMotionState();
     if ( ms ) {
 
@@ -534,12 +478,10 @@ function updatePhysics( deltaTime ) {
       var p = transformAux1.getOrigin();
       var q = transformAux1.getRotation();
       objThree.position.set( p.x(), p.y(), p.z() );
+      //console.log('set', q.x(), q.y(), q.z());
       objThree.quaternion.set( q.x(), q.y(), q.z(), q.w() );
-
     }
-
   }
-
 }
 
 export default {};
