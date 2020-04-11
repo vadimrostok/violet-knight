@@ -271,6 +271,8 @@ function initPhysics(mesh) {
 
 }
 
+//let i = 1;
+
 function generateObject() {
   var numTypes = 4;
   var objectType = Math.ceil( Math.random() * numTypes );
@@ -286,10 +288,18 @@ function generateObject() {
   shape = new Ammo.btSphereShape( radius );
   shape.setMargin( margin );
 
-  threeObject.position.set( -10, 30, 10 );
+  const { x,y,z} = window.controls.object.position;
+  threeObject.position.set(x,y,z);
 
-  var mass = 0.001;
-  var localInertia = new Ammo.btVector3( 1, 1, 1 );
+  var mass = 1;
+  //var mass = 10000;
+  //var mass = 0.00001;
+  // var mass = Math.pow(2,i);
+  // i++;
+  // console.log(i, mass);
+  //var localInertia = new Ammo.btVector3( 1, 1, 1 );
+  //var localInertia = new Ammo.btVector3( 100, 100, 100 );
+  var localInertia = new Ammo.btVector3( 0, 0, 0 );
   shape.calculateLocalInertia( mass, localInertia );
   var transform = new Ammo.btTransform();
   transform.setIdentity();
@@ -405,12 +415,13 @@ let tmpPos, tmpQuat, ammoTmpPos, ammoTmpQuat, tmpTrans;
 const setGravityByCamera = throttle((polarAngle, azimuthalAngle) => {
   const polarGravity = polarAngle - Math.PI/2;
   //console.log(polarGravity);
-  console.log(
-    -(Math.sin(azimuthalAngle)*5).toFixed(2),
-    (polarGravity*5).toFixed(2),
-    -(Math.cos(azimuthalAngle)*5).toFixed(2)
-  );
-  physicsWorld.setGravity( new Ammo.btVector3( -Math.sin(azimuthalAngle), polarGravity, -Math.cos(azimuthalAngle) ) );
+  const multiplier = 10;
+  //const multiplier = 1;
+  physicsWorld.setGravity( new Ammo.btVector3(
+    -Math.sin(azimuthalAngle)*Math.cos(polarGravity)*multiplier,
+    polarGravity*multiplier,
+    -Math.cos(azimuthalAngle)*Math.cos(polarGravity)*multiplier
+  ) );
 }, 250);
 
 function updatePhysics( deltaTime ) {
@@ -461,7 +472,8 @@ function updatePhysics( deltaTime ) {
   ground.userData.physicsBody.setWorldTransform(tmpTrans);
   groundMs.setWorldTransform(tmpTrans);
 
-  physicsWorld.stepSimulation( deltaTime*3, 10 );
+  physicsWorld.stepSimulation( deltaTime*10, 10 );
+  //physicsWorld.stepSimulation( deltaTime*2, 10 );
 
   shift += deltaTime*0.1;
 
