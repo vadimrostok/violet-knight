@@ -1,20 +1,8 @@
-import Game from './entry.js';
-import _ from './example.js';
+import GameLauncher from './game/launcher.js';
+//import _ from './example.js';
 //import _ from './example-cannon.js';
 
-const game = new Game();
-
-game.initialize();
-
-const animate = function() {
-  if (game.onFrame()) {
-    window.requestAnimationFrame(animate);
-  } else {
-    game.onReastart(animate);
-  };
-};
-
-animate();
+GameLauncher.init();
 
 if (module.onReload) {
   module.onReload(() => {
