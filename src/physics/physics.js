@@ -101,13 +101,20 @@ class Physics {
 
     this.physicsWorld.addRigidBody( body );
   }
+  gravityMultiplier = 0
+  getGravityMultiplier = () => {
+    return this.gravityMultiplier;
+  }
+  setGravityMultiplier = (gravityMultiplier) => {
+    this.gravityMultiplier = gravityMultiplier;
+  }
   setGravityByCamera = throttle((controlsInstance) => {
     const controls = controlsInstance.get();
     const polarAngle = controls.getPolarAngle();
     const azimuthalAngle = controls.getAzimuthalAngle();
 
     const polarGravity = polarAngle - Math.PI/2;
-    const multiplier = 10;
+    const multiplier = this.gravityMultiplier;
     this.physicsWorld.setGravity( new Ammo.btVector3(
       -Math.sin(azimuthalAngle)*Math.cos(polarGravity)*multiplier,
       polarGravity*multiplier,
@@ -118,7 +125,7 @@ class Physics {
   shift = 0
   update = ( deltaTime, controlsInstance ) => {
 
-    this.setGravityByCamera(controlsInstance);
+    //this.setGravityByCamera(controlsInstance);
 
     this.physicsWorld.stepSimulation( deltaTime*10, 10 );
 

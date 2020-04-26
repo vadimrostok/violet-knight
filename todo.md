@@ -9,3 +9,8 @@
 - real level prototype
 - read about "activate"
 - detect object in target place to finish level
+
+
+
++ control gravity by wheel
+- press button to stop object and set gravity to 0
