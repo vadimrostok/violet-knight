@@ -45,7 +45,7 @@ class Physics {
         new Ammo.btVector3(levelMeshVertices[i*9+3], levelMeshVertices[i*9+4], levelMeshVertices[i*9+5]),
         new Ammo.btVector3(levelMeshVertices[i*9+6], levelMeshVertices[i*9+7], levelMeshVertices[i*9+8]),
         false
-      );    
+      );
     }
 
     const levelShape = new Ammo.btBvhTriangleMeshShape(ammoMesh, true, true);
@@ -108,6 +108,13 @@ class Physics {
   setGravityMultiplier = (gravityMultiplier) => {
     this.gravityMultiplier = gravityMultiplier;
   }
+  enableGravity = (gravityMultiplier) => {
+    this.physicsWorld.setGravity(new Ammo.btVector3(
+      0,
+      -10,
+      0
+    ))
+  }
   setGravityByCamera = throttle((controlsInstance) => {
     const controls = controlsInstance.get();
     const polarAngle = controls.getPolarAngle();
@@ -158,4 +165,3 @@ class Physics {
 const physicsInstance = new Physics();
 
 export default physicsInstance;
-
