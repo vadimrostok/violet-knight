@@ -83,6 +83,8 @@ class Launcher {
 
     graphicsInstance.scene.add(levelMesh);
 
+    window.debugLevelMesh = levelMesh;
+
     controlsInstance.init(graphicsInstance, {
       addAgent: this.addAgent,
       enableGravity: physicsInstance.enableGravity,

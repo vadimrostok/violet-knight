@@ -37,9 +37,9 @@ class Graphics {
     this.camera.lookAt( 0, 0, 0 );
 
     const light = new THREE.DirectionalLight( 0xffffff, 1 );
-    light.position.set( 100, 100, 50 );
+    light.position.set( 50, 200, 50 );
     light.castShadow = true;
-    const dLight = 200;
+    const dLight = 500;
     const sLight = dLight * 0.25;
     light.shadow.camera.left = - sLight;
     light.shadow.camera.right = sLight;

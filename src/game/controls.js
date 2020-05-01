@@ -58,28 +58,29 @@ class Controls {
     const radius = 3;
     this.agent = graphicsInstance.createAgent(radius);
     //this.agent.visible = false;
-    this.agent.position.set( 0, 0, 0);
+    this.agent.position.set( 0, 20, 0);
+    window.debugAgent = this.agent;
 
     this.cameraBallJoint = new THREE.Group();
     this.cameraBallJoint.position.set( 0, 20, 0);
 
-    this.cameraBallJoint.add(this.agent);
-
-    graphicsInstance.camera.position.set(50,0,0);
-    graphicsInstance.camera.lookAt(0,0,0);
+    graphicsInstance.camera.position.set(50, 0, 0);
+    graphicsInstance.camera.lookAt(0, 0, 0);
 
     this.cameraBallJoint.add(graphicsInstance.camera);
 
     graphicsInstance.scene.add(this.cameraBallJoint);
     window.cameraBallJoint=this.cameraBallJoint;
 
-    this.cameraBallJoint.agent = this.agent;
+    //this.cameraBallJoint.agent = this.agent;
 
-    addAgent(this.cameraBallJoint);
+    addAgent(this.agent);
 
     //graphicsInstance.camera.rotation.set(...initialCameraRotation);
 
     this.camera = graphicsInstance.camera;
+
+    const pushMultiplier = 50;
 
     window.addEventListener( 'keydown', ( event ) => {
       switch ( event.keyCode ) {
@@ -87,7 +88,7 @@ class Controls {
         addAgent();
         break;
       case 71://g
-        enableGravity();
+        enableGravity(this.cameraBallJointRotationQuaternion);
         break;
       case 65://a
         this.cameraBallJointRotationFlags.left = true;
@@ -108,16 +109,28 @@ class Controls {
         this.cameraBallJointRotationFlags.rollDown = true;
         break;
       case 38://up
-        this.cameraBallJointMovementFlags.forward = true;
+        const up = new THREE.Vector3(0, 1*pushMultiplier, 0);
+        up.applyQuaternion(this.cameraBallJointRotationQuaternion);
+        this.agent.userData.physicsBody.applyForce(new window.Ammo.btVector3(up.x, up.y, up.z));
+        //this.cameraBallJointMovementFlags.forward = true;
         break;
       case 40://down
-        this.cameraBallJointMovementFlags.backward = true;
+        const down = new THREE.Vector3(0, -1*pushMultiplier, 0);
+        down.applyQuaternion(this.cameraBallJointRotationQuaternion);
+        this.agent.userData.physicsBody.applyForce(new window.Ammo.btVector3(down.x, down.y, down.z));
+        //this.cameraBallJointMovementFlags.backward = true;
         break;
       case 37://left
-        this.cameraBallJointMovementFlags.leftward = true;
+        const left = new THREE.Vector3(0, 0, 1*pushMultiplier);
+        left.applyQuaternion(this.cameraBallJointRotationQuaternion);
+        this.agent.userData.physicsBody.applyForce(new window.Ammo.btVector3(left.x, left.y, left.z));
+        //this.cameraBallJointMovementFlags.leftward = true;
         break;
       case 39://right
-        this.cameraBallJointMovementFlags.rightward = true;
+        const right = new THREE.Vector3(0, 0, -1*pushMultiplier);
+        right.applyQuaternion(this.cameraBallJointRotationQuaternion);
+        this.agent.userData.physicsBody.applyForce(new window.Ammo.btVector3(right.x, right.y, right.z));
+        //this.cameraBallJointMovementFlags.rightward = true;
         break;
       }
       this.updateInfo();
@@ -143,18 +156,18 @@ class Controls {
       case 69://e
         this.cameraBallJointRotationFlags.rollDown = false;
         break;
-      case 38://up
-        this.cameraBallJointMovementFlags.forward = false;
-        break;
-      case 40://down
-        this.cameraBallJointMovementFlags.backward = false;
-        break;
-      case 37://left
-        this.cameraBallJointMovementFlags.leftward = false;
-        break;
-      case 39://right
-        this.cameraBallJointMovementFlags.rightward = false;
-        break;
+      // case 38://up
+      //   this.cameraBallJointMovementFlags.forward = false;
+      //   break;
+      // case 40://down
+      //   this.cameraBallJointMovementFlags.backward = false;
+      //   break;
+      // case 37://left
+      //   this.cameraBallJointMovementFlags.leftward = false;
+      //   break;
+      // case 39://right
+      //   this.cameraBallJointMovementFlags.rightward = false;
+      //   break;
       }
       this.updateInfo();
     }, false );
@@ -169,22 +182,54 @@ class Controls {
     }, true );
   }
 
+  transformAux = null
+
   update = (deltaTime, lastAgent) => {
     const { left, right, up, down, rollUp, rollDown } = this.cameraBallJointRotationFlags;
     const { forward, backward, leftward, rightward } = this.cameraBallJointMovementFlags;
 
     if (forward || backward) {
-      //const v = new THREE.Vector3((backward ? 1 : -1) * 100 * deltaTime, 0, 0);
       const v = new THREE.Vector3(0, (forward ? 1 : -1) * 100 * deltaTime, 0);
       v.applyQuaternion(this.cameraBallJointRotationQuaternion);
-      this.cameraBallJoint.position.add(v);
+      this.agent.position.add(v);
+      this.cameraBallJoint.position.copy(this.agent.position);
+
+      if (!this.transformAux) {
+        this.transformAux = new window.Ammo.btTransform();
+      }
+
+      const motionState = this.agent.userData.physicsBody.getMotionState();
+      const { x, y, z } = this.agent.position;
+
+      if (motionState) {
+        this.transformAux.setIdentity();
+        this.transformAux.setOrigin( new window.Ammo.btVector3( x, y, z ) );
+        motionState.setWorldTransform( this.transformAux );
+        this.agent.userData.physicsBody.setMotionState(motionState);
+        //this.agent.userData.physicsBody.setWorldTransform( this.transformAux );
+      }
     }
 
     if (leftward || rightward) {
       const v = new THREE.Vector3(0, 0, (leftward ? 1 : -1) * 100 * deltaTime);
-      //const v = new THREE.Vector3(0, 0, (rightward ? 1 : -1) * 100 * deltaTime);
       v.applyQuaternion(this.cameraBallJointRotationQuaternion);
-      this.cameraBallJoint.position.add(v);
+      this.agent.position.add(v);
+      this.cameraBallJoint.position.copy(this.agent.position);
+
+      if (!this.transformAux) {
+        this.transformAux = new window.Ammo.btTransform();
+      }
+
+      const motionState = this.agent.userData.physicsBody.getMotionState();
+      const { x, y, z } = this.agent.position;
+
+      if (motionState) {
+        this.transformAux.setIdentity();
+        this.transformAux.setOrigin( new window.Ammo.btVector3( x, y, z ) );
+        //motionState.setWorldTransform( this.transformAux );
+        //this.agent.userData.physicsBody.setMotionState(motionState);
+        this.agent.userData.physicsBody.setWorldTransform( this.transformAux );
+      }
     }
 
     if (left || right) {
@@ -195,7 +240,7 @@ class Controls {
 
     if (up || down) {
       this.cameraBallJointRotationQuaternion.multiply(
-        quaternion([0, 0, 1], (down ? 1 : -1) * deltaTime),
+        quaternion([0, 0, 1], (down ? -1 : 1) * deltaTime),
       );
     }
 

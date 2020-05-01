@@ -69,6 +69,7 @@ class Physics {
 
     // levelBody.setGravity(new Ammo.btVector3( 0, 0, 0 ));
 
+    levelBody.setRestitution(1);
     levelMesh.userData.physicsBody = levelBody;
     this.dynamicObjects.push(levelMesh);
   }
@@ -94,8 +95,11 @@ class Physics {
     const motionState = new Ammo.btDefaultMotionState(transform);
     const rbInfo = new Ammo.btRigidBodyConstructionInfo( mass, motionState, shape, localInertia );
     const body = new Ammo.btRigidBody( rbInfo );
+    body.setDamping(0.1, 0.1);
+    body.setRestitution(1);
 
     agentMesh.userData.physicsBody = body;
+    agentMesh.isAgent = true;
 
     this.dynamicObjects.push(agentMesh);
 
@@ -108,11 +112,13 @@ class Physics {
   setGravityMultiplier = (gravityMultiplier) => {
     this.gravityMultiplier = gravityMultiplier;
   }
-  enableGravity = (gravityMultiplier) => {
+  enableGravity = (rotationQuaternion) => {
+    const v = new THREE.Vector3(-10,0,0);
+    v.applyQuaternion(rotationQuaternion);
     this.physicsWorld.setGravity(new Ammo.btVector3(
-      0,
-      -10,
-      0
+      v.x,
+      v.y,
+      v.z
     ))
   }
   setGravityByCamera = throttle((controlsInstance) => {
@@ -134,7 +140,7 @@ class Physics {
 
     //this.setGravityByCamera(controlsInstance);
 
-    this.physicsWorld.stepSimulation( deltaTime*10, 10 );
+    this.physicsWorld.stepSimulation( deltaTime*3, 10 );
 
     this.shift += deltaTime*0.1;
 
@@ -155,8 +161,13 @@ class Physics {
         const position = this.transformAux.getOrigin();
         const quaternion = this.transformAux.getRotation();
 
-        objThree.position.set( position.x(), position.y(), position.z() );
+        const [ x, y, z ] = [position.x(), position.y(), position.z()];
+        objThree.position.set(x, y, z);
         objThree.quaternion.set( quaternion.x(), quaternion.y(), quaternion.z(), quaternion.w() );
+
+        if (objThree.isAgent) {
+          controlsInstance.cameraBallJoint.position.set(x, y, z);
+        }
       }
     }
   }
