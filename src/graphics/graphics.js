@@ -1,14 +1,37 @@
 import * as THREE from 'three';
 
-import { OrbitControls } from '../../node_modules/three/examples/jsm/controls/OrbitControls.js';
-import { createAgentMaterial } from './materials';
-import { setCamera, setScene } from '../game/gameObjectsStore';
+import {
+  cameraPositionRelativeToAgent,
+  initialAgentPosition
+} from '../constants';
+import { createAgentMaterial, guideMaterial } from './materials';
+import {
+  setCamera,
+  setCameraBallJoint,
+  setScene
+} from '../game/gameObjectsStore';
+
+function getArrowShape(guideWidth, guideLength, guideConeWidth, guideConeHeight) {
+  const arrow = new THREE.Shape();
+  
+  arrow.moveTo(guideWidth/2, 0);
+  arrow.lineTo(guideWidth/2, guideLength/2 - guideConeHeight);
+  arrow.lineTo(guideConeWidth/2, guideLength/2 - guideConeHeight);
+  arrow.lineTo(0, guideLength/2);
+  arrow.lineTo(-guideConeWidth/2, guideLength/2 - guideConeHeight);
+  arrow.lineTo(-guideWidth/2, guideLength/2 - guideConeHeight);
+
+  arrow.lineTo(-guideWidth/2, 0);
+
+  return arrow;
+}
 
 class Graphics {
   renderer = null
   camera = null
+  cameraBallJoint = null
   scene = null
-  controls = null
+  guide = null
   container = document.getElementById('container')
 
   onWindowResize = () => {
@@ -18,6 +41,9 @@ class Graphics {
     this.renderer.setSize( window.innerWidth, window.innerHeight );
   }
   init() {
+
+    // Renderer:
+
     this.renderer = new THREE.WebGLRenderer();
     this.renderer.shadowMapEnabled = true;
     this.renderer.setPixelRatio( window.devicePixelRatio );
@@ -26,18 +52,22 @@ class Graphics {
 
     this.container.appendChild( this.renderer.domElement );
 
-    this.camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.2, 2000 );
-    setCamera(this.camera);
+    // Scene:
 
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color( 0xbfd1e5 );
     setScene(this.scene);
 
-    this.camera.position.y = 70;
-    this.camera.position.x = 70;
+    // Camera:
 
+    this.camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.2, 2000 );
+    this.camera.position.x = 70;
+    this.camera.position.y = 70;
     this.camera.position.z = 70;
     this.camera.lookAt( 0, 0, 0 );
+    setCamera(this.camera);
+
+    // Lights:
 
     const light = new THREE.DirectionalLight( 0xffffff, 1 );
     light.position.set( 50, 200, 50 );
@@ -48,14 +78,42 @@ class Graphics {
     light.shadow.camera.right = sLight;
     light.shadow.camera.top = sLight;
     light.shadow.camera.bottom = - sLight;
-
     light.shadow.camera.near = dLight / 30;
     light.shadow.camera.far = dLight;
-
     light.shadow.mapSize.x = 1024 * 2;
     light.shadow.mapSize.y = 1024 * 2;
-
     this.scene.add( light );
+
+
+    // Camera ball joint:
+
+    this.cameraBallJoint = new THREE.Group();
+    this.cameraBallJoint.position.set(...initialAgentPosition);
+
+    this.camera.position.set(...cameraPositionRelativeToAgent);
+    this.camera.lookAt(0, 0, 0);
+
+
+
+    // Guide:
+
+    const lineGeometry = new THREE.ShapeGeometry(
+      getArrowShape(1, 30, 3, 5)
+    );
+    //lineGeometry.rotation.set(Math.PI/2, Math.PI/2, Math.PI/2);
+    console.log('lineGeometry', lineGeometry);
+    lineGeometry.rotateX(this.camera.rotation.x);
+    this.guide = new THREE.Line( lineGeometry, guideMaterial);
+    this.guide.computeLineDistances();
+    //this.scene.add(this.guide);
+
+
+    this.cameraBallJoint.add(this.camera);
+    this.cameraBallJoint.add(this.guide);
+
+    this.scene.add(this.cameraBallJoint);
+
+    setCameraBallJoint(this.cameraBallJoint);
 
     window.addEventListener( 'resize', this.onWindowResize, false );
   }
@@ -73,6 +131,7 @@ class Graphics {
     return agentMesh;
   }
   update() {
+    this.guide.rotation.copy(this.camera.rotation);
     this.renderer.render(this.scene, this.camera);
   }
 };

@@ -10,6 +10,7 @@ import { levelMaterial } from './../graphics/materials.js';
 import controlEventsHandlerInstance from './controlEventsHandler.js';
 import graphicsInstance from './../graphics/graphics.js';
 import physicsInstance from './../physics/physics.js';
+import mainLoopBody from './mainLoopBody.js';
 
 function buildInfoHtml(obj) {
   return Object.keys(obj).reduce(
@@ -30,11 +31,7 @@ class Launcher {
 
     const deltaTime = this.clock.getDelta();
 
-    controlEventsHandlerInstance.update(deltaTime, getAgent());
-
-    physicsInstance.update(deltaTime, controlEventsHandlerInstance);
-
-    graphicsInstance.update();
+    mainLoopBody(deltaTime);
 
     this.time += deltaTime;
   }

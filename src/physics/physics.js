@@ -1,6 +1,7 @@
 import throttle from 'lodash/throttle';
 
 import { agentRadius } from '../constants';
+import { getCameraBallJoint } from '../game/gameObjectsStore';
 
 let Ammo;
 
@@ -109,8 +110,8 @@ class Physics {
 
     this.physicsWorld.addRigidBody( body );
   }
-  enableGravity = (rotationQuaternion) => {
-    const v = new THREE.Vector3(-10,0,0);
+  setGravity = (rotationQuaternion, amount = -10) => {
+    const v = new THREE.Vector3(amount, 0, 0);
     v.applyQuaternion(rotationQuaternion);
     this.physicsWorld.setGravity(new Ammo.btVector3(
       v.x,
@@ -120,7 +121,7 @@ class Physics {
   }
 
   shift = 0
-  update = ( deltaTime, controlsInstance ) => {
+  update = ( deltaTime ) => {
 
     this.physicsWorld.stepSimulation( deltaTime*3, 10 );
 
@@ -148,7 +149,7 @@ class Physics {
         objThree.quaternion.set( quaternion.x(), quaternion.y(), quaternion.z(), quaternion.w() );
 
         if (objThree.isAgent) {
-          controlsInstance.cameraBallJoint.position.set(x, y, z);
+          getCameraBallJoint().position.set(x, y, z);
         }
       }
     }
