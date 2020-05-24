@@ -1,5 +1,7 @@
 import throttle from 'lodash/throttle';
 
+import { agentRadius } from '../constants';
+
 let Ammo;
 
 class Physics {
@@ -21,7 +23,7 @@ class Physics {
   reset() {
     this.dynamicObjects = [];
   }
-  createLevel(levelMesh) {
+  setLevelPhysicsBody(levelMesh) {
     // Physics configuration
     this.collisionConfiguration = new Ammo.btDefaultCollisionConfiguration();
     this.dispatcher = new Ammo.btCollisionDispatcher( this.collisionConfiguration );
@@ -71,11 +73,13 @@ class Physics {
 
     levelBody.setRestitution(1);
     levelMesh.userData.physicsBody = levelBody;
+
+    //FIXME: if level change we'll need to remove old one from dynamicObjects
     this.dynamicObjects.push(levelMesh);
   }
-  addAgent(agentMesh, radius) {
+  setAgentPhysicsBody(agentMesh) {
     const margin = 0.05;
-    const shape = new Ammo.btSphereShape( radius );
+    const shape = new Ammo.btSphereShape( agentRadius );
 
     shape.setMargin( margin );
 
@@ -105,13 +109,6 @@ class Physics {
 
     this.physicsWorld.addRigidBody( body );
   }
-  gravityMultiplier = 0
-  getGravityMultiplier = () => {
-    return this.gravityMultiplier;
-  }
-  setGravityMultiplier = (gravityMultiplier) => {
-    this.gravityMultiplier = gravityMultiplier;
-  }
   enableGravity = (rotationQuaternion) => {
     const v = new THREE.Vector3(-10,0,0);
     v.applyQuaternion(rotationQuaternion);
@@ -119,26 +116,11 @@ class Physics {
       v.x,
       v.y,
       v.z
-    ))
+    ));
   }
-  setGravityByCamera = throttle((controlsInstance) => {
-    const controls = controlsInstance.get();
-    const polarAngle = controls.getPolarAngle();
-    const azimuthalAngle = controls.getAzimuthalAngle();
-
-    const polarGravity = polarAngle - Math.PI/2;
-    const multiplier = this.gravityMultiplier;
-    this.physicsWorld.setGravity( new Ammo.btVector3(
-      -Math.sin(azimuthalAngle)*Math.cos(polarGravity)*multiplier,
-      polarGravity*multiplier,
-      -Math.cos(azimuthalAngle)*Math.cos(polarGravity)*multiplier
-    ) );
-  }, 250)
 
   shift = 0
   update = ( deltaTime, controlsInstance ) => {
-
-    //this.setGravityByCamera(controlsInstance);
 
     this.physicsWorld.stepSimulation( deltaTime*3, 10 );
 

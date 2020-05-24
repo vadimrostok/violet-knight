@@ -1,12 +1,15 @@
 import 'regenerator-runtime/runtime.js';
+
 import * as THREE from 'three';
 import throttle from 'lodash/throttle';
-import { OBJLoader } from '../../node_modules/three/examples/jsm/loaders/OBJLoader.js';
 
-import physicsInstance from './../physics/physics.js';
-import graphicsInstance from './../graphics/graphics.js';
+import { OBJLoader } from '../../node_modules/three/examples/jsm/loaders/OBJLoader.js';
+import { agentRadius, initialAgentPosition } from '../constants';
+import { getAgent, getScene, setAgent, setLevel } from './gameObjectsStore';
 import { levelMaterial } from './../graphics/materials.js';
-import controlsInstance from './controls.js';
+import controlEventsHandlerInstance from './controlEventsHandler.js';
+import graphicsInstance from './../graphics/graphics.js';
+import physicsInstance from './../physics/physics.js';
 
 function buildInfoHtml(obj) {
   return Object.keys(obj).reduce(
@@ -22,17 +25,16 @@ class Launcher {
 
   clock = new THREE.Clock()
   time = 0
-  lastAgent = null;
   loop = () => {
     requestAnimationFrame( this.loop );
 
     const deltaTime = this.clock.getDelta();
 
-    controlsInstance.update(deltaTime, this.lastAgent);
+    controlEventsHandlerInstance.update(deltaTime, getAgent());
 
-    physicsInstance.update(deltaTime, controlsInstance);
+    physicsInstance.update(deltaTime, controlEventsHandlerInstance);
 
-    graphicsInstance.renderer.render(graphicsInstance.scene, graphicsInstance.camera);
+    graphicsInstance.update();
 
     this.time += deltaTime;
   }
@@ -42,11 +44,11 @@ class Launcher {
 
   //showInfo = throttle(() => {
   showInfo = () => {
-    this.infoNode.innerHTML = buildInfoHtml(controlsInstance.info);
+    this.infoNode.innerHTML = buildInfoHtml(controlEventsHandlerInstance.info);
   }
   //}, 250);
 
-  loadLevel(levelId) {
+  getLevelMesh(levelId) {
     return new Promise((resolve, reject) => {
       new OBJLoader(this.meshLoadingManager)
         .setPath('./models/')
@@ -73,63 +75,49 @@ class Launcher {
 
   async initLevel(levelId) {
 
-    physicsInstance.init();
+    // Create level:
 
-    graphicsInstance.init();
+    const level = await this.getLevelMesh(levelId);
 
-    const levelMesh = await this.loadLevel(levelId);
+    physicsInstance.setLevelPhysicsBody(level);
+    setLevel(level);
+    getScene().add(level);
 
-    physicsInstance.createLevel(levelMesh);
+    window.debugLevelMesh = level;
 
-    graphicsInstance.scene.add(levelMesh);
+    // Create agent:
 
-    window.debugLevelMesh = levelMesh;
+    const agent = graphicsInstance.createAgent(agentRadius);
+    agent.position.set(...initialAgentPosition);
 
-    controlsInstance.init(graphicsInstance, {
-      addAgent: this.addAgent,
-      enableGravity: physicsInstance.enableGravity,
-      setGravityMultiplier: physicsInstance.setGravityMultiplier,
-      getGravityMultiplier: physicsInstance.getGravityMultiplier,
-      showInfo: this.showInfo,
-    });
+    // // FIXME: debug:
+    // window.debugAgent = agent;
 
-    // var geometry = new THREE.BoxGeometry( 50, 50, 50 );
-    // var material = new THREE.MeshPhongMaterial( { color: 0xff5533 } );
-    // var cube = new THREE.Mesh( geometry, material );
-    // cube.position.set( 0, 0, 0 );
-    // graphicsInstance.scene.add( cube );
-    // window.cube = cube
+    physicsInstance.setAgentPhysicsBody(agent);
+    setAgent(agent);
 
-
-
-    var axesHelper = new THREE.AxesHelper( 500 );
-    graphicsInstance.scene.add( axesHelper );
+    const axesHelper = new THREE.AxesHelper( 500 );
+    getScene().add( axesHelper );
 
     this.loop();
-  }
-
-  addAgent = (agentMesh) => {
-    const radius = 3;
-    // const agentMesh = graphicsInstance.createAgent(radius);
-
-    //agentMesh.position.set(...initialAgentPosition);
-
-    // const { x, y, z } = controlsInstance.camera.position;
-    // agentMesh.position.set(x - 2*radius, y - 2*radius, z - 2*radius);
-
-    physicsInstance.addAgent(agentMesh, radius);
-
-    this.lastAgent = agentMesh;
-
-    return agentMesh;
   }
 
   pause() {}
   resume() {}
   init() {
+
+    physicsInstance.init();
+    graphicsInstance.init();
+    controlEventsHandlerInstance.init({
+      enableGravity: physicsInstance.enableGravity,
+      showInfo: this.showInfo,
+    });
+
     this.initLevel(`1`);
-    window.debugLauncher = this;
-    window.debugControlsInstance = controlsInstance;
+
+    // // FIXME: debug:
+    // window.debugLauncher = this;
+    // window.debugControlsInstance = controlEventsHandlerInstance;
   }
 };
 

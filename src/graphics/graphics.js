@@ -2,6 +2,7 @@ import * as THREE from 'three';
 
 import { OrbitControls } from '../../node_modules/three/examples/jsm/controls/OrbitControls.js';
 import { createAgentMaterial } from './materials';
+import { setCamera, setScene } from '../game/gameObjectsStore';
 
 class Graphics {
   renderer = null
@@ -26,9 +27,11 @@ class Graphics {
     this.container.appendChild( this.renderer.domElement );
 
     this.camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.2, 2000 );
+    setCamera(this.camera);
 
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color( 0xbfd1e5 );
+    setScene(this.scene);
 
     this.camera.position.y = 70;
     this.camera.position.x = 70;
@@ -68,6 +71,9 @@ class Graphics {
     this.scene.add(agentMesh);
 
     return agentMesh;
+  }
+  update() {
+    this.renderer.render(this.scene, this.camera);
   }
 };
 

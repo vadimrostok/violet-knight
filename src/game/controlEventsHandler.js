@@ -1,7 +1,10 @@
 import * as THREE from 'three';
+
+import { agentRadius, initialAgentPosition } from '../constants';
+import { getAgent, getCamera, getScene } from './gameObjectsStore';
 import { quaternion } from '../helpers';
 
-// debug:
+// FIXME: debug:
 window.THREE = THREE;
 
 import throttle from 'lodash/throttle';
@@ -11,9 +14,10 @@ const initialCameraRotation = [0,0,0];
 const rotationQuaternion = new THREE.Quaternion();
 rotationQuaternion.setFromAxisAngle( new THREE.Vector3( 0, 1, 0 ), -Math.PI / 2 );
 
+// FIXME: debug:
 window.rotationQuaternion = rotationQuaternion;
 
-class Controls {
+class ControlEventsHandler {
   info = {
     gravityMultiplier: 0,
   }
@@ -33,9 +37,6 @@ class Controls {
     rightward: false,
   }
 
-  horizontalAngle = 0
-
-  agent = null
   camera = null
   cameraBallJoint = null
   cameraBallJointRotationQuaternion = new THREE.Quaternion()
@@ -43,50 +44,38 @@ class Controls {
   updateInfo() {
     this.info = {
       ...this.info,
-      cameraBallJointRotationFlags: this.cameraBallJointRotationFlags,
-      cameraBallJointRotationQuaternion: this.cameraBallJointRotationQuaternion,
-      cameraBallJointMovementFlags: this.cameraBallJointMovementFlags,
+      // cameraBallJointRotationFlags: this.cameraBallJointRotationFlags,
+      // cameraBallJointRotationQuaternion: this.cameraBallJointRotationQuaternion,
+      // cameraBallJointMovementFlags: this.cameraBallJointMovementFlags,
     };
     this.showInfo();
   }
 
-  init(graphicsInstance, actions) {
-    const { addAgent, enableGravity, setGravityMultiplier, getGravityMultiplier, showInfo } = actions;
+  init({ enableGravity, showInfo }) {
+
     this.showInfo = showInfo;
 
     // ball joint
-    const radius = 3;
-    this.agent = graphicsInstance.createAgent(radius);
-    //this.agent.visible = false;
-    this.agent.position.set( 0, 20, 0);
-    window.debugAgent = this.agent;
-
     this.cameraBallJoint = new THREE.Group();
-    this.cameraBallJoint.position.set( 0, 20, 0);
+    this.cameraBallJoint.position.set(...initialAgentPosition);
 
-    graphicsInstance.camera.position.set(50, 0, 0);
-    graphicsInstance.camera.lookAt(0, 0, 0);
+    getCamera().position.set(100, 0, 0);
+    getCamera().lookAt(0, 0, 0);
 
-    this.cameraBallJoint.add(graphicsInstance.camera);
+    this.cameraBallJoint.add(getCamera());
 
-    graphicsInstance.scene.add(this.cameraBallJoint);
+    getScene().add(this.cameraBallJoint);
+
+    // FIXME: debug:
     window.cameraBallJoint=this.cameraBallJoint;
-
-    //this.cameraBallJoint.agent = this.agent;
-
-    addAgent(this.agent);
-
-    //graphicsInstance.camera.rotation.set(...initialCameraRotation);
-
-    this.camera = graphicsInstance.camera;
 
     const pushMultiplier = 50;
 
     window.addEventListener( 'keydown', ( event ) => {
       switch ( event.keyCode ) {
-      case 66://b
-        addAgent();
-        break;
+      // case 66://b
+      //   addAgent();
+      //   break;
       case 71://g
         enableGravity(this.cameraBallJointRotationQuaternion);
         break;
@@ -111,25 +100,25 @@ class Controls {
       case 38://up
         const up = new THREE.Vector3(0, 1*pushMultiplier, 0);
         up.applyQuaternion(this.cameraBallJointRotationQuaternion);
-        this.agent.userData.physicsBody.applyForce(new window.Ammo.btVector3(up.x, up.y, up.z));
+        getAgent().userData.physicsBody.applyForce(new window.Ammo.btVector3(up.x, up.y, up.z));
         //this.cameraBallJointMovementFlags.forward = true;
         break;
       case 40://down
         const down = new THREE.Vector3(0, -1*pushMultiplier, 0);
         down.applyQuaternion(this.cameraBallJointRotationQuaternion);
-        this.agent.userData.physicsBody.applyForce(new window.Ammo.btVector3(down.x, down.y, down.z));
+        getAgent().userData.physicsBody.applyForce(new window.Ammo.btVector3(down.x, down.y, down.z));
         //this.cameraBallJointMovementFlags.backward = true;
         break;
       case 37://left
         const left = new THREE.Vector3(0, 0, 1*pushMultiplier);
         left.applyQuaternion(this.cameraBallJointRotationQuaternion);
-        this.agent.userData.physicsBody.applyForce(new window.Ammo.btVector3(left.x, left.y, left.z));
+        getAgent().userData.physicsBody.applyForce(new window.Ammo.btVector3(left.x, left.y, left.z));
         //this.cameraBallJointMovementFlags.leftward = true;
         break;
       case 39://right
         const right = new THREE.Vector3(0, 0, -1*pushMultiplier);
         right.applyQuaternion(this.cameraBallJointRotationQuaternion);
-        this.agent.userData.physicsBody.applyForce(new window.Ammo.btVector3(right.x, right.y, right.z));
+        getAgent().userData.physicsBody.applyForce(new window.Ammo.btVector3(right.x, right.y, right.z));
         //this.cameraBallJointMovementFlags.rightward = true;
         break;
       }
@@ -171,15 +160,6 @@ class Controls {
       }
       this.updateInfo();
     }, false );
-
-    const wheelMultiplier = 0.3;
-    document.addEventListener( 'wheel', ( event ) => {
-      const newGravityMultiplier = getGravityMultiplier() + (event.wheelDelta < 0 ? 1 : -1)*wheelMultiplier;
-      setGravityMultiplier(newGravityMultiplier);
-      this.info.gravityMultiplier = newGravityMultiplier;
-      this.info.horizontalAngle = this.horizontalAngle;
-      this.updateInfo();
-    }, true );
   }
 
   transformAux = null
@@ -191,44 +171,44 @@ class Controls {
     if (forward || backward) {
       const v = new THREE.Vector3(0, (forward ? 1 : -1) * 100 * deltaTime, 0);
       v.applyQuaternion(this.cameraBallJointRotationQuaternion);
-      this.agent.position.add(v);
-      this.cameraBallJoint.position.copy(this.agent.position);
+      getAgent().position.add(v);
+      this.cameraBallJoint.position.copy(getAgent().position);
 
       if (!this.transformAux) {
         this.transformAux = new window.Ammo.btTransform();
       }
 
-      const motionState = this.agent.userData.physicsBody.getMotionState();
-      const { x, y, z } = this.agent.position;
+      const motionState = getAgent().userData.physicsBody.getMotionState();
+      const { x, y, z } = getAgent().position;
 
       if (motionState) {
         this.transformAux.setIdentity();
         this.transformAux.setOrigin( new window.Ammo.btVector3( x, y, z ) );
         motionState.setWorldTransform( this.transformAux );
-        this.agent.userData.physicsBody.setMotionState(motionState);
-        //this.agent.userData.physicsBody.setWorldTransform( this.transformAux );
+        getAgent().userData.physicsBody.setMotionState(motionState);
+        //getAgent().userData.physicsBody.setWorldTransform( this.transformAux );
       }
     }
 
     if (leftward || rightward) {
       const v = new THREE.Vector3(0, 0, (leftward ? 1 : -1) * 100 * deltaTime);
       v.applyQuaternion(this.cameraBallJointRotationQuaternion);
-      this.agent.position.add(v);
-      this.cameraBallJoint.position.copy(this.agent.position);
+      getAgent().position.add(v);
+      this.cameraBallJoint.position.copy(getAgent().position);
 
       if (!this.transformAux) {
         this.transformAux = new window.Ammo.btTransform();
       }
 
-      const motionState = this.agent.userData.physicsBody.getMotionState();
-      const { x, y, z } = this.agent.position;
+      const motionState = getAgent().userData.physicsBody.getMotionState();
+      const { x, y, z } = getAgent().position;
 
       if (motionState) {
         this.transformAux.setIdentity();
         this.transformAux.setOrigin( new window.Ammo.btVector3( x, y, z ) );
         //motionState.setWorldTransform( this.transformAux );
-        //this.agent.userData.physicsBody.setMotionState(motionState);
-        this.agent.userData.physicsBody.setWorldTransform( this.transformAux );
+        //getAgent().userData.physicsBody.setMotionState(motionState);
+        getAgent().userData.physicsBody.setWorldTransform( this.transformAux );
       }
     }
 
@@ -255,6 +235,6 @@ class Controls {
   }
 };
 
-const controlsInstance = new Controls();
+const controlEventsHandlerInstance = new ControlEventsHandler();
 
-export default controlsInstance;
+export default controlEventsHandlerInstance;
