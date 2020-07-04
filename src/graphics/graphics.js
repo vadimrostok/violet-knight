@@ -2,12 +2,21 @@ import * as THREE from 'three';
 
 import {
   cameraPositionRelativeToAgent,
-  initialAgentPosition
+  guidePositionY,
+  initialAgentPosition,
+  guideLength,
 } from '../constants';
-import { createAgentMaterial, guideMaterial } from './materials';
+import {
+  createAgentMaterial,
+  guideMaterial,
+  shaderMaterial,
+  agentMaterial,
+} from './materials';
+import { quaternion } from '../helpers';
 import {
   setCamera,
   setCameraBallJoint,
+  setGuide,
   setScene
 } from '../game/gameObjectsStore';
 
@@ -60,7 +69,7 @@ class Graphics {
 
     // Camera:
 
-    this.camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.2, 2000 );
+    this.camera = new THREE.PerspectiveCamera( 90, window.innerWidth / window.innerHeight, 0.2, 2000 );
     this.camera.position.x = 70;
     this.camera.position.y = 70;
     this.camera.position.z = 70;
@@ -93,19 +102,32 @@ class Graphics {
     this.camera.position.set(...cameraPositionRelativeToAgent);
     this.camera.lookAt(0, 0, 0);
 
+    // FIXME: debug
+    window.camera = this.camera;
+
 
 
     // Guide:
 
     const lineGeometry = new THREE.ShapeGeometry(
-      getArrowShape(1, 30, 3, 5)
+      getArrowShape(1, guideLength, 3, 5)
     );
     //lineGeometry.rotation.set(Math.PI/2, Math.PI/2, Math.PI/2);
-    console.log('lineGeometry', lineGeometry);
-    lineGeometry.rotateX(this.camera.rotation.x);
-    this.guide = new THREE.Line( lineGeometry, guideMaterial);
-    this.guide.computeLineDistances();
-    //this.scene.add(this.guide);
+    //lineGeometry.rotateX(this.camera.rotation.x);
+
+    this.guide = new THREE.Mesh( lineGeometry, shaderMaterial);
+
+    this.guide.visible = false;
+    this.guide.position.x = 15;
+    this.guide.position.y = guidePositionY;
+
+    this.guide.rotation.set(0, Math.PI/2, 0);
+    this.guide.quaternion.multiply(quaternion([1, 0, 0], -Math.PI/4));
+
+    setGuide(this.guide);
+
+    //FIXME: debug
+    window.guide = this.guide;
 
 
     this.cameraBallJoint.add(this.camera);
@@ -120,7 +142,7 @@ class Graphics {
   createAgent(radius) {
     const agentMesh = new THREE.Mesh(
       new THREE.SphereBufferGeometry( radius, 20, 20 ),
-      createAgentMaterial()
+      agentMaterial,
     );
 
     agentMesh.receiveShadow = true;
@@ -131,7 +153,6 @@ class Graphics {
     return agentMesh;
   }
   update() {
-    this.guide.rotation.copy(this.camera.rotation);
     this.renderer.render(this.scene, this.camera);
   }
 };

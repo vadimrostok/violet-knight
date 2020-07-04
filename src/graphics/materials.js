@@ -1,4 +1,7 @@
-import { MeshPhysicalMaterial, MeshPhongMaterial, LineDashedMaterial } from 'three';
+import {
+  MeshPhysicalMaterial, MeshPhongMaterial, LineDashedMaterial, DoubleSide, MeshBasicMaterial,
+  RawShaderMaterial,
+} from 'three';
 
 export const levelMaterial = new MeshPhysicalMaterial( {
   color: 0xff5533,
@@ -12,13 +15,29 @@ export const levelMaterial = new MeshPhysicalMaterial( {
 //   shininess: 350,
 // } );
 
-export const guideMaterial = new LineDashedMaterial( {
+export const guideMaterial = new MeshBasicMaterial( {
   color: 0xffffff,
-  dashSize: 0.3,
-  gapSize: 0.1,
+  side: DoubleSide,
 } );
 
 export const createAgentMaterial = () => {
   const color = Math.floor( Math.random() * ( 1 << 24 ) );
   return new MeshPhongMaterial( { color } );
 };
+
+export const agentMaterial = new MeshPhongMaterial( {
+  color: 0xff0000,
+  emissive: 0x0000ff,
+  transparent: true,
+  opacity: 0.5,
+} );
+
+export const shaderMaterial = new RawShaderMaterial({
+  uniforms: {
+    time: { value: 1.0 }
+  },
+  vertexShader: document.getElementById( 'vertexShader' ).textContent,
+  fragmentShader: document.getElementById( 'fragmentShader' ).textContent,
+  side: DoubleSide,
+  depthTest: false,
+});

@@ -37,6 +37,9 @@ class ControlEventsHandler {
   actionFlags = {
     toggleGravity: false,
     punch: false,
+    punchControlsActive: false,
+    showPunchControls: false,
+    hidePunchControls: false,
   }
 
   camera = null
@@ -57,13 +60,13 @@ class ControlEventsHandler {
     
     window.addEventListener( 'keydown', ( event ) => {
       switch ( event.keyCode ) {
-          // case 66://b
-          //   addAgent();
-          //   break;
         case 32:// space
-          this.actionFlags.punch = true;
+          if (!event.repeat) {
+            this.actionFlags.showPunchControls = true;
+            this.actionFlags.punchControlsActive = true;
+          }
           break;
-        case 71://g
+        case 71 && !event.repeat://g
           this.actionFlags.toggleGravity = !this.actionFlags.toggleGravity;
           break;
         case 65://a
@@ -103,24 +106,29 @@ class ControlEventsHandler {
 
     window.addEventListener( 'keyup', ( event ) => {
       switch ( event.keyCode ) {
-      case 65://a
-        this.cameraBallJointRotationFlags.left = false;
-        break;
-      case 68://d
-        this.cameraBallJointRotationFlags.right = false;
-        break;
-      case 87://w
-        this.cameraBallJointRotationFlags.up = false;
-        break;
-      case 83://s
-        this.cameraBallJointRotationFlags.down = false;
-        break;
-      case 81://q
-        this.cameraBallJointRotationFlags.rollUp = false;
-        break;
-      case 69://e
-        this.cameraBallJointRotationFlags.rollDown = false;
-        break;
+        case 32:// space
+          this.actionFlags.hidePunchControls = true;
+          this.actionFlags.punchControlsActive = false;
+          this.actionFlags.punch = true;
+          break;
+        case 65://a
+          this.cameraBallJointRotationFlags.left = false;
+          break;
+        case 68://d
+          this.cameraBallJointRotationFlags.right = false;
+          break;
+        case 87://w
+          this.cameraBallJointRotationFlags.up = false;
+          break;
+        case 83://s
+          this.cameraBallJointRotationFlags.down = false;
+          break;
+        case 81://q
+          this.cameraBallJointRotationFlags.rollUp = false;
+          break;
+        case 69://e
+          this.cameraBallJointRotationFlags.rollDown = false;
+          break;
       }
       this.updateInfo();
     }, false );

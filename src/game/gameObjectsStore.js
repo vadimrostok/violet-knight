@@ -4,6 +4,7 @@ const store = {
   level: null,
   agent: null,
   cameraBallJoint: null,
+  guide: null,
 };
 
 function getter(key) {
@@ -37,3 +38,6 @@ export const getAgent = getter('agent');
 
 export const getCameraBallJoint = getter('cameraBallJoint');
 export const setCameraBallJoint = setter('cameraBallJoint');
+
+export const getGuide = getter('guide');
+export const setGuide = setter('guide');

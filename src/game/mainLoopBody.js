@@ -1,12 +1,32 @@
-import { Quaternion, Vector3 } from 'three';
+import { Quaternion, Vector3, Object3D } from 'three';
 
-import { getAgent, getCameraBallJoint } from './gameObjectsStore';
-import { pushMultiplier } from '../constants';
+import {
+  cameraPositionRelativeToAgent,
+  guideMovementInterval,
+  guidePositionY,
+  pushMultiplier
+} from '../constants';
+import {
+  getAgent,
+  getCamera,
+  getCameraBallJoint,
+  getGuide
+} from './gameObjectsStore';
 import { quaternion } from '../helpers';
+import { shaderMaterial } from '../graphics/materials.js';
 import controlEventsHandlerInstance from './controlEventsHandler.js';
 import graphicsInstance from './../graphics/graphics.js';
 import physicsInstance from './../physics/physics.js';
 
+console.log('shaderMaterial', shaderMaterial);
+window.shaderMaterial=shaderMaterial;
+
+const mockCamera = new Object3D();
+mockCamera.position.set(...cameraPositionRelativeToAgent);
+//mockCamera.position.set(-50,-50,-50);
+mockCamera.lookAt( 0, 0, 0 );
+
+//const cameraBallJointRotationQuaternion = mockCamera.quaternion;
 const cameraBallJointRotationQuaternion = new Quaternion();
 
 function actOnCameraBallJoint(deltaTime) {
@@ -66,17 +86,36 @@ function actOnAgent(deltaTime) {
   }
 }
 
+let time = 0;
 let gravityEnabled = controlEventsHandlerInstance.actionFlags.toggleGravity;
 function actOnActions() {
-  const { toggleGravity, punch } = controlEventsHandlerInstance.actionFlags;
+  const {
+    toggleGravity, showPunchControls, hidePunchControls, punchControlsActive, punch,
+  } = controlEventsHandlerInstance.actionFlags;
 
   if (toggleGravity !== gravityEnabled) {
     gravityEnabled = toggleGravity;
     physicsInstance.setGravity(cameraBallJointRotationQuaternion, gravityEnabled ? -10 : 0);
   }
 
+  if (showPunchControls) {
+    time = 0.0001;
+    getGuide().visible = true;
+    controlEventsHandlerInstance.actionFlags.showPunchControls = false;
+  }
+
+  if (hidePunchControls) {
+    getGuide().visible = false;
+    controlEventsHandlerInstance.actionFlags.hidePunchControls = false;
+  }
+
+  if (punchControlsActive) {
+    getGuide().position.y = guidePositionY - (time % guideMovementInterval)*5;
+    controlEventsHandlerInstance.actionFlags.hidePunchControls = false;
+  }
+
   if (punch) {
-    const forward = new Vector3(-pushMultiplier*10, 0, 0);
+    const forward = new Vector3(-pushMultiplier*(time % guideMovementInterval)*10, 0, 0);
     forward.applyQuaternion(cameraBallJointRotationQuaternion);
     getAgent().userData.physicsBody.applyForce(new window.Ammo.btVector3(forward.x, forward.y, forward.z));
     controlEventsHandlerInstance.actionFlags.punch = false;
@@ -98,4 +137,7 @@ export default function(deltaTime) {
   physicsInstance.update(deltaTime);
 
   graphicsInstance.update();
+
+  time += deltaTime;
+  shaderMaterial.uniforms.time.value = time * 25;
 }

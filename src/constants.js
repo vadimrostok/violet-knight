@@ -4,4 +4,10 @@ export const pushMultiplier = 50;
 
 export const initialAgentPosition = [0, 20, 0];
 
-export const cameraPositionRelativeToAgent = [100, 100, 100];
+export const cameraPositionRelativeToAgent = [20, 0, 0];
+
+export const guideLength = 30;
+
+export const guidePositionY = -guideLength/4 - agentRadius;
+
+export const guideMovementInterval = 2;

@@ -1,16 +1,15 @@
-- ball should emit light
-- camera should avoid obstacles
-- user can control gravity force
+x ball should emit light
+x camera should avoid obstacles
+x user can control gravity force
+x control gravity by wheel
+x press button to stop object and set gravity to 0
++ use other controls, not orbit
+x real level prototype
 - use wasm
 - use worker
-- use other controls, not orbit
-- mobile controls
 - sound
-- real level prototype
 - read about "activate"
-- detect object in target place to finish level
-
-
-
-+ control gravity by wheel
-- press button to stop object and set gravity to 0
+- plain/shape collision: detect player agent in target places to finish level
+- sky box
+- timer
+- mobile controls
