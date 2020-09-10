@@ -75,10 +75,25 @@ class Launcher {
     // Create level:
 
     const level = await this.getLevelMesh(levelId);
-
     physicsInstance.setLevelPhysicsBody(level);
     setLevel(level);
     getScene().add(level);
+
+    for (let i = 0; i < 10; i++) {
+      const targetGeometry = new THREE.BoxBufferGeometry(
+        1 + Math.random()*i*10,
+        1 + Math.random()*i*10,
+        1 + Math.random()*i*10
+      );
+      const targetLocation = new THREE.Vector3(
+        50 + i*10 + Math.random()*i*10
+      );
+      const material = new THREE.MeshBasicMaterial({ color: 0xaa3355 });
+      const target = new THREE.Mesh( targetGeometry, material );
+      target.position.copy(targetLocation);
+      getScene().add( target );
+      physicsInstance.addTarget(target, i);
+    }
 
     window.debugLevelMesh = level;
 
@@ -101,9 +116,8 @@ class Launcher {
 
   pause() {}
   resume() {}
-  init() {
-
-    physicsInstance.init();
+  async init() {
+    await physicsInstance.init();
     graphicsInstance.init();
     controlEventsHandlerInstance.init({
       enableGravity: physicsInstance.enableGravity,
@@ -111,6 +125,7 @@ class Launcher {
     });
 
     this.initLevel(`1`);
+    
 
     // // FIXME: debug:
     // window.debugLauncher = this;

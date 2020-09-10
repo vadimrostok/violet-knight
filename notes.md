@@ -11,3 +11,9 @@
   - save and load state
   - controls
   
+
+# new todo
+- create shapes player need to hit
+- add timer
+- add score
+- add ability to view 1st person and 3rd person

@@ -36,6 +36,9 @@ export const getLevel = getter('level');
 export const setAgent = setter('agent');
 export const getAgent = getter('agent');
 
+export const setTarget = id => setter(`target-${id}`);
+export const getTarget = id => getter(`target-${id}`);
+
 export const getCameraBallJoint = getter('cameraBallJoint');
 export const setCameraBallJoint = setter('cameraBallJoint');
 

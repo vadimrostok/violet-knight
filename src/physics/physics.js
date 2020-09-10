@@ -14,15 +14,61 @@ class Physics {
   physicsWorld = null
   transformAux = null
   init() {
-    if (typeof window.Ammo === 'function') {
-      window.Ammo().then( function ( AmmoLib ) {
-        window.Ammo = Ammo = AmmoLib;
-      });
-      this.transformAux = new Ammo.btTransform();
-    }
+    return new Promise((resolve, reject) => {
+      if (typeof window.Ammo === 'function') {
+        window.Ammo().then(( AmmoLib ) => {
+          window.Ammo = Ammo = AmmoLib;
+          this.transformAux = new Ammo.btTransform();
+          resolve();
+        });
+      } else {
+        resolve();
+      }
+    });
   }
   reset() {
     this.dynamicObjects = [];
+  }
+  addTarget(targetMesh, id) {
+    const ammoMesh = new Ammo.btTriangleMesh(true, true);
+    const levelMeshVertices = targetMesh.geometry.attributes.position.array;
+
+    for (let i = 0, l = levelMeshVertices.length/9; i < l; i++) {
+      ammoMesh.addTriangle(
+        new Ammo.btVector3(levelMeshVertices[i*9],   levelMeshVertices[i*9+1], levelMeshVertices[i*9+2]),
+        new Ammo.btVector3(levelMeshVertices[i*9+3], levelMeshVertices[i*9+4], levelMeshVertices[i*9+5]),
+        new Ammo.btVector3(levelMeshVertices[i*9+6], levelMeshVertices[i*9+7], levelMeshVertices[i*9+8]),
+        false
+      );
+    }
+
+    const targetShape = new Ammo.btBvhTriangleMeshShape(ammoMesh, true, true);
+
+    const targetTransform = new Ammo.btTransform();
+    targetTransform.setIdentity();
+    const { x, y, z } = targetMesh.position;
+    targetTransform.setOrigin( new Ammo.btVector3( x, y, z ) );
+
+    const targetMass = 0;
+    const targetLocalInertia = new Ammo.btVector3( 0, 0, 0 );
+    const targetMotionState = new Ammo.btDefaultMotionState( targetTransform );
+    const targetBody = new Ammo.btRigidBody(
+      new Ammo.btRigidBodyConstructionInfo(
+        targetMass,
+        targetMotionState,
+        targetShape,
+        targetLocalInertia,
+      ));
+
+    targetBody.gameRole = 'target';
+    targetBody.targetId = id;
+
+    this.physicsWorld.addRigidBody( targetBody );
+
+    targetBody.setRestitution(1);
+    targetMesh.userData.physicsBody = targetBody;
+
+    this.dynamicObjects.push(targetMesh);
   }
   setLevelPhysicsBody(levelMesh) {
     // Physics configuration
@@ -55,7 +101,7 @@ class Physics {
 
     const levelTransform = new Ammo.btTransform();
     levelTransform.setIdentity();
-    levelTransform.setOrigin( new Ammo.btVector3( 0, 0, 0 ) );
+    levelTransform.setOrigin( new Ammo.btVector3( 0, 0, 50 ) );
 
     const levelMass = 0;
     const levelLocalInertia = new Ammo.btVector3( 0, 0, 0 );
@@ -69,6 +115,30 @@ class Physics {
       ));
 
     this.physicsWorld.addRigidBody( levelBody );
+    window.physicsWorld = this.physicsWorld;
+    window.dispatcher = this.dispatcher;
+
+    function collisionCallbackFunc( cp,colObj0,colObj1)
+    {
+      colObj0 = Ammo.wrapPointer(colObj0, Ammo.btRigidBody);
+      colObj1 = Ammo.wrapPointer(colObj1, Ammo.btRigidBody);
+      cp = Ammo.wrapPointer(cp, Ammo.btManifoldPoint);
+      // trigger your events.
+      console.log("IN", colObj0, colObj1);
+    }
+
+    var collisionCallbackPointer = Ammo.addFunction(collisionCallbackFunc);
+    //var collisionCallbackPointer = collisionCallbackFunc;
+    //var dynamicsWorld = new Ammo.btDiscreteDynamicsWorld(...);
+    //dynamicsWorld.setContactProcessedCallback(collisionCallbackPointer);
+
+    this.physicsWorld.setContactProcessedCallback(collisionCallbackPointer);
+    
+    // this.physicsWorld.setContactAddedCallback((...a) => {
+    //   console.log(a);
+    //   // const numManifolds = world.getDispatcher().getNumManifolds();
+    //   // console.log('numManifolds', numManifolds);
+    // });
 
     // levelBody.setGravity(new Ammo.btVector3( 0, 0, 0 ));
 
@@ -100,6 +170,9 @@ class Physics {
     const motionState = new Ammo.btDefaultMotionState(transform);
     const rbInfo = new Ammo.btRigidBodyConstructionInfo( mass, motionState, shape, localInertia );
     const body = new Ammo.btRigidBody( rbInfo );
+
+    body.gameRole = 'agent';
+
     body.setDamping(0.1, 0.1);
     body.setRestitution(1);
 
