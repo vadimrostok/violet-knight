@@ -6,11 +6,12 @@ import throttle from 'lodash/throttle';
 import { OBJLoader } from '../../node_modules/three/examples/jsm/loaders/OBJLoader.js';
 import { agentRadius, initialAgentPosition } from '../constants';
 import { getAgent, getScene, setAgent, setLevel } from './gameObjectsStore';
+import { getTargetMaterial } from '../graphics/materials';
 import { levelMaterial } from './../graphics/materials.js';
 import controlEventsHandlerInstance from './controlEventsHandler.js';
 import graphicsInstance from './../graphics/graphics.js';
-import physicsInstance from './../physics/physics.js';
 import mainLoopBody from './mainLoopBody.js';
+import physicsInstance from './../physics/physics.js';
 
 function buildInfoHtml(obj) {
   return Object.keys(obj).reduce(
@@ -70,8 +71,10 @@ class Launcher {
     });
   }
 
-  async initLevel(levelId) {
+  async initLevel(targetCount) {
 
+    /*
+    async initLevel(levelId) {
     // Create level:
 
     const level = await this.getLevelMesh(levelId);
@@ -79,23 +82,54 @@ class Launcher {
     setLevel(level);
     getScene().add(level);
 
-    for (let i = 0; i < 10; i++) {
+    */
+
+    physicsInstance.initPhysics();
+
+
+    /*
+    const targetGeometry = new THREE.BoxBufferGeometry(
+      150,
+      152,
+      154,
+    );
+    const targetLocation = new THREE.Vector3(
+      -150,
+      0,
+      0
+    );
+    const target = new THREE.Mesh( targetGeometry, getTargetMaterial() );
+    target.position.copy(targetLocation);
+    getScene().add( target );
+    physicsInstance.addTarget(target, 0);
+
+    */
+
+    
+    for (let i = 0; i < targetCount; i++) {
+      const [targetX, targetY, targetZ] = [1 + Math.random()*i*10,
+                                           1 + Math.random()*i*10,
+                                           1 + Math.random()*i*10];
       const targetGeometry = new THREE.BoxBufferGeometry(
-        1 + Math.random()*i*10,
-        1 + Math.random()*i*10,
-        1 + Math.random()*i*10
+        targetX, targetY, targetZ
       );
       const targetLocation = new THREE.Vector3(
-        50 + i*10 + Math.random()*i*10
+        50 + (i % 2 === 0 ? 1 : -1)*i*10 +
+          (i % 2 === 0 ? 1 : -1)*Math.random()*i*10,
+        50 + (i % 2 === 0 ? 1 : -1)*i*10 +
+          (i % 2 === 0 ? 1 : -1)*Math.random()*i*10,
+        50 + (i % 2 === 0 ? 1 : -1)*i*10 +
+          (i % 2 === 0 ? 1 : -1)*Math.random()*i*10
       );
-      const material = new THREE.MeshBasicMaterial({ color: 0xaa3355 });
-      const target = new THREE.Mesh( targetGeometry, material );
+      const target = new THREE.Mesh( targetGeometry, getTargetMaterial() );
       target.position.copy(targetLocation);
+      target.receiveShadow = true;
       getScene().add( target );
-      physicsInstance.addTarget(target, i);
+      physicsInstance.addTarget(target, i, { targetX, targetY, targetZ });
     }
 
-    window.debugLevelMesh = level;
+
+    //window.debugLevelMesh = level;
 
     // Create agent:
 
@@ -124,7 +158,7 @@ class Launcher {
       showInfo: this.showInfo,
     });
 
-    this.initLevel(`1`);
+    this.initLevel(10);
     
 
     // // FIXME: debug:

@@ -17,3 +17,5 @@
 - add timer
 - add score
 - add ability to view 1st person and 3rd person
+
+- use https://pybullet.org/Bullet/BulletFull/classbtConvexHullShape.html ?

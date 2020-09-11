@@ -9,6 +9,21 @@ export const levelMaterial = new MeshPhysicalMaterial( {
   shininess: 200,
 } );
 
+function pad(n, size) {
+  var s = String(n);
+  while (s.length < (size || 2)) {s = "0" + s;}
+  return s;
+}
+
+export const getTargetMaterial = () => new MeshPhysicalMaterial( {
+  color: Math.floor( Math.random() * ( 1 << 24 ) ),
+  emissive: parseInt(pad(Math.floor( Math.random() * ( 1 << 8 ) / 1.5 ).toString(16), 2) +
+                     pad(Math.floor( Math.random() * ( 1 << 8 ) / 3 ).toString(16), 2) +
+                     pad(Math.floor( Math.random() * ( 1 << 8 ) / 3 ).toString(16), 2), 16),
+  specular: 0x111111,
+  shininess: 200,
+} );
+
 // export const guideMaterial = new MeshPhysicalMaterial( {
 //   color: 0x22ffff,
 //   specular: 0x11ff11,

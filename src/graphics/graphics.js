@@ -49,6 +49,23 @@ class Graphics {
 
     this.renderer.setSize( window.innerWidth, window.innerHeight );
   }
+  initSkyBox = () => {
+    var imagePrefix = "/public/cubemap/";
+    var directions  = ["px", "nx", "py", "ny", "pz", "nz"];
+    var imageSuffix = ".png";
+    var skyGeometry = new THREE.CubeGeometry( 1000, 1000, 1000 );	
+    
+    var materialArray = [];
+    for (var i = 0; i < 6; i++)
+      materialArray.push( new THREE.MeshBasicMaterial({
+	map: THREE.ImageUtils.loadTexture( imagePrefix + directions[i] + imageSuffix ),
+	side: THREE.BackSide,
+        receiveShadow: false,
+      }));
+    var skyMaterial = new THREE.MeshFaceMaterial( materialArray );
+    var skyBox = new THREE.Mesh( skyGeometry, skyMaterial );
+    this.scene.add( skyBox );
+  }
   init() {
 
     // Renderer:
@@ -69,7 +86,7 @@ class Graphics {
 
     // Camera:
 
-    this.camera = new THREE.PerspectiveCamera( 90, window.innerWidth / window.innerHeight, 0.2, 2000 );
+    this.camera = new THREE.PerspectiveCamera( 73, window.innerWidth / window.innerHeight, 0.2, 2000 );
     this.camera.position.x = 70;
     this.camera.position.y = 70;
     this.camera.position.z = 70;
@@ -79,9 +96,9 @@ class Graphics {
     // Lights:
 
     const light = new THREE.DirectionalLight( 0xffffff, 1 );
-    light.position.set( 50, 200, 50 );
+    light.position.set( 500, 500, 500 );
     light.castShadow = true;
-    const dLight = 500;
+    const dLight = 1000;
     const sLight = dLight * 0.25;
     light.shadow.camera.left = - sLight;
     light.shadow.camera.right = sLight;
@@ -89,9 +106,12 @@ class Graphics {
     light.shadow.camera.bottom = - sLight;
     light.shadow.camera.near = dLight / 30;
     light.shadow.camera.far = dLight;
-    light.shadow.mapSize.x = 1024 * 2;
-    light.shadow.mapSize.y = 1024 * 2;
+    light.shadow.mapSize.x = 1024 * 4;
+    light.shadow.mapSize.y = 1024 * 4;
     this.scene.add( light );
+
+    // var alight = new THREE.AmbientLight( 0x404040 ); // soft white light
+    // this.scene.add( alight );
 
 
     // Camera ball joint:
@@ -138,6 +158,8 @@ class Graphics {
     setCameraBallJoint(this.cameraBallJoint);
 
     window.addEventListener( 'resize', this.onWindowResize, false );
+
+    this.initSkyBox();
   }
   createAgent(radius) {
     const agentMesh = new THREE.Mesh(

@@ -29,20 +29,32 @@ class Physics {
   reset() {
     this.dynamicObjects = [];
   }
-  addTarget(targetMesh, id) {
-    const ammoMesh = new Ammo.btTriangleMesh(true, true);
-    const levelMeshVertices = targetMesh.geometry.attributes.position.array;
+  addTarget(targetMesh, id, { targetX, targetY, targetZ }) {
+    const ammoMesh = new Ammo.btTriangleMesh(true, false);
 
-    for (let i = 0, l = levelMeshVertices.length/9; i < l; i++) {
+    /*
+    const levelMeshVertices = targetMesh.geometry.attributes.position.array;
+    
+    for (let i = 0, l = levelMeshVertices.length/12; i < l; i++) {
       ammoMesh.addTriangle(
         new Ammo.btVector3(levelMeshVertices[i*9],   levelMeshVertices[i*9+1], levelMeshVertices[i*9+2]),
         new Ammo.btVector3(levelMeshVertices[i*9+3], levelMeshVertices[i*9+4], levelMeshVertices[i*9+5]),
         new Ammo.btVector3(levelMeshVertices[i*9+6], levelMeshVertices[i*9+7], levelMeshVertices[i*9+8]),
         false
       );
+      ammoMesh.addTriangle(
+        new Ammo.btVector3(levelMeshVertices[i*9+6], levelMeshVertices[i*9+7], levelMeshVertices[i*9+8]),
+        new Ammo.btVector3(levelMeshVertices[i*9+3], levelMeshVertices[i*9+4], levelMeshVertices[i*9+5]),
+        new Ammo.btVector3(levelMeshVertices[i*9+9],   levelMeshVertices[i*9+10], levelMeshVertices[i*9+11]),
+        false
+      );
+      //;;console.log(i, levelMeshVertices);
     }
 
     const targetShape = new Ammo.btBvhTriangleMeshShape(ammoMesh, true, true);
+    */
+
+    const targetShape = new Ammo.btBoxShape( new Ammo.btVector3( targetX/2, targetY/2, targetZ/2 ) );
 
     const targetTransform = new Ammo.btTransform();
     targetTransform.setIdentity();
@@ -60,6 +72,7 @@ class Physics {
         targetLocalInertia,
       ));
 
+    targetBody.mesh = targetMesh;
     targetBody.gameRole = 'target';
     targetBody.targetId = id;
 
@@ -68,7 +81,44 @@ class Physics {
     targetBody.setRestitution(1);
     targetMesh.userData.physicsBody = targetBody;
 
-    this.dynamicObjects.push(targetMesh);
+    //this.dynamicObjects.push(targetMesh);
+  }
+  initPhysics() {
+    // Physics configuration
+    this.collisionConfiguration = new Ammo.btDefaultCollisionConfiguration();
+    this.dispatcher = new Ammo.btCollisionDispatcher( this.collisionConfiguration );
+    this.broadphase = new Ammo.btDbvtBroadphase();
+    this.solver = new Ammo.btSequentialImpulseConstraintSolver();
+    this.physicsWorld = new Ammo.btDiscreteDynamicsWorld(
+      this.dispatcher,
+      this.broadphase,
+      this.solver,
+      this.collisionConfiguration,
+    );
+    // Gravity will be set dynamically, depending on camera position.
+    this.physicsWorld.setGravity(new Ammo.btVector3( 0, 0, 0 ));
+
+    function collisionCallbackFunc( cp,colObj0,colObj1) {
+      colObj0 = Ammo.wrapPointer(colObj0, Ammo.btRigidBody);
+      colObj1 = Ammo.wrapPointer(colObj1, Ammo.btRigidBody);
+      cp = Ammo.wrapPointer(cp, Ammo.btManifoldPoint);
+      if (colObj0.gameRole === 'target') {
+        colObj0.mesh.visible = false;
+        const physicsWorld = this.physicsWorld;
+        setTimeout(function () {
+          physicsWorld.removeRigidBody(colObj0);
+        }, 10);
+      }
+      // trigger your events.
+      console.log("IN", colObj0, colObj1);
+    };
+
+    var collisionCallbackPointer = Ammo.addFunction(collisionCallbackFunc.bind(this));
+    //var collisionCallbackPointer = collisionCallbackFunc;
+    //var dynamicsWorld = new Ammo.btDiscreteDynamicsWorld(...);
+    //dynamicsWorld.setContactProcessedCallback(collisionCallbackPointer);
+
+    this.physicsWorld.setContactProcessedCallback(collisionCallbackPointer);
   }
   setLevelPhysicsBody(levelMesh) {
     // Physics configuration
