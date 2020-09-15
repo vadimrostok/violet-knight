@@ -45,6 +45,8 @@ class ControlEventsHandler {
   camera = null
 
   updateInfo() {
+    return;
+    // DEBUG:
     this.info = {
       ...this.info,
       // cameraBallJointRotationFlags: this.cameraBallJointRotationFlags,

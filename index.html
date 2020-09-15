@@ -65,11 +65,105 @@
      .log-sub-tree {
          padding-left: 16px;
      }
+     .hidden {
+         display: none;
+     }
+     #start {
+         margin: 0;
+         background: red;
+         position: absolute;
+         top: 50%;
+         left: 50%;
+         margin-right: -50%;
+         transform: translate(-50%, -50%);
+         font-size: 7rem;
+         border: none;
+         border-radius: 0.5em;
+         padding: 0 0.5em;
+         line-height: 7rem;
+         color: white;
+         letter-spacing: 1rem;
+         font-weight: bold;
+         cursor: pointer;
+     }
+     .controls-container {
+         
+     }
+     .controls-container .control-item {
+         position: fixed;
+         background: red;
+         color: white;
+         font-weight: bold;
+         font-size: 5rem;
+         border-radius: 1rem;
+         font-family: sans-serif;
+     }
+     .controls-container .control-up {
+         left: 50%;
+         top: 1rem;
+         padding: 0 1rem;
+         transform: translate(-50%, 0);
+     }
+     .controls-container .control-down {
+         left: 50%;
+         bottom: 1rem;
+         padding: 0 1rem;
+         transform: translate(-50%, 0);
+     }
+     .controls-container .control-left {
+         top: 50%;
+         left: 1rem;
+         transform: translate(0, -50%);
+     }
+     .controls-container .control-right {
+         top: 50%;
+         right: 1rem;
+         transform: translate(0, -50%);
+     }
+     .controls-container .control-clockwise {
+         top: 1rem;
+         right: 1rem;
+         padding: 0 1rem;
+     }
+     .controls-container .control-anticlockwise {
+         top: 1rem;
+         left: 1rem;
+         padding: 0 1rem;
+     }
+     .controls-container .control-info-left {
+         bottom: 1rem;
+         left: 1rem;
+         padding: 0 1rem;
+         font-size: 1.5rem;
+         padding: 1rem;
+     }
+     .controls-container .control-info-right {
+         bottom: 1rem;
+         right: 1rem;
+         padding: 0 1rem;
+         font-size: 1.5rem;
+         padding: 1rem;
+     }
+     
     </style>
   </head>
   <body>
-    <div id="container"></div>
-    <div id="info"></div>
-    <script src="./build/bundle.js"></script>
+      <div class="controls-container">
+          <div class="control-item control-up">↑</div>
+          <div class="control-item control-down">↓</div>
+          <div class="control-item control-left">←</div>
+          <div class="control-item control-right">→</div>
+          <div class="control-item control-clockwise">↷</div>
+          <div class="control-item control-anticlockwise">↶</div>
+          <div class="control-item control-info-left">tap anywhere and hold<br/>to swing</div>
+          <div class="control-item control-info-right">release to punch</div>
+      </div>
+      <div id="container" class="hidden"></div>
+      <div id="info"></div>
+      <div id="settings">
+          <canvas id="settings-canvas"></canvas>
+          <button id="start">Start</button>
+      </div>
+      <script src="./build/bundle.js"></script>
   </body>
 </html>

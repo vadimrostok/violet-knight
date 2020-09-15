@@ -12,6 +12,11 @@ import controlEventsHandlerInstance from './controlEventsHandler.js';
 import graphicsInstance from './../graphics/graphics.js';
 import mainLoopBody from './mainLoopBody.js';
 import physicsInstance from './../physics/physics.js';
+import audioInstance from './audio.js';
+import {
+  start as startSettingsBlock,
+  stop as stopSettingsBlock,
+} from './settings';
 
 function buildInfoHtml(obj) {
   return Object.keys(obj).reduce(
@@ -113,13 +118,13 @@ class Launcher {
       const targetGeometry = new THREE.BoxBufferGeometry(
         targetX, targetY, targetZ
       );
+      const xInvert = (i % 2 === 0 ? 1 : -1);
+      const yInvert = (i % 6 > 3 ? 1 : -1);
+      const zInvert = (i % 4 >= 2 ? 1 : -1);
       const targetLocation = new THREE.Vector3(
-        50 + (i % 2 === 0 ? 1 : -1)*i*10 +
-          (i % 2 === 0 ? 1 : -1)*Math.random()*i*10,
-        50 + (i % 2 === 0 ? 1 : -1)*i*10 +
-          (i % 2 === 0 ? 1 : -1)*Math.random()*i*10,
-        50 + (i % 2 === 0 ? 1 : -1)*i*10 +
-          (i % 2 === 0 ? 1 : -1)*Math.random()*i*10
+        50 + xInvert*i*10 + xInvert*Math.random()*i*10,
+        50 + yInvert*i*10 + zInvert*Math.random()*i*10,
+        50 + zInvert*i*10 + zInvert*Math.random()*i*10,
       );
       const target = new THREE.Mesh( targetGeometry, getTargetMaterial() );
       target.position.copy(targetLocation);
@@ -142,8 +147,8 @@ class Launcher {
     physicsInstance.setAgentPhysicsBody(agent);
     setAgent(agent);
 
-    const axesHelper = new THREE.AxesHelper( 500 );
-    getScene().add( axesHelper );
+    // const axesHelper = new THREE.AxesHelper( 500 );
+    // getScene().add( axesHelper );
 
     this.loop();
   }
@@ -159,7 +164,18 @@ class Launcher {
     });
 
     this.initLevel(10);
-    
+
+    const startButton = document.getElementById('start');
+    const settingsBlock = document.getElementById('settings');
+    const gameBlock = document.getElementById('container');
+
+    startSettingsBlock();
+    startButton.addEventListener('click', () => {
+      stopSettingsBlock();
+      settingsBlock.classList.add('hidden');
+      gameBlock.classList.remove('hidden');
+      audioInstance.newGame();
+    });
 
     // // FIXME: debug:
     // window.debugLauncher = this;

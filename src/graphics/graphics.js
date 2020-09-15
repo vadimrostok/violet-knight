@@ -17,7 +17,8 @@ import {
   setCamera,
   setCameraBallJoint,
   setGuide,
-  setScene
+  setScene,
+  setPointLight,
 } from '../game/gameObjectsStore';
 
 function getArrowShape(guideWidth, guideLength, guideConeWidth, guideConeHeight) {
@@ -96,9 +97,10 @@ class Graphics {
     // Lights:
 
     const light = new THREE.DirectionalLight( 0xffffff, 1 );
-    light.position.set( 500, 500, 500 );
+    //light.position.set( 500, 500, 500 );
+    light.position.set( 300, 300, 300 );
     light.castShadow = true;
-    const dLight = 1000;
+    const dLight = 1500;
     const sLight = dLight * 0.25;
     light.shadow.camera.left = - sLight;
     light.shadow.camera.right = sLight;
@@ -106,9 +108,17 @@ class Graphics {
     light.shadow.camera.bottom = - sLight;
     light.shadow.camera.near = dLight / 30;
     light.shadow.camera.far = dLight;
-    light.shadow.mapSize.x = 1024 * 4;
-    light.shadow.mapSize.y = 1024 * 4;
+    light.shadow.mapSize.x = 1024 * 5;
+    light.shadow.mapSize.y = 1024 * 5;
     this.scene.add( light );
+
+    // var helper = new THREE.DirectionalLightHelper( light, 5 );
+    // this.scene.add( helper );
+
+    var plight = new THREE.PointLight( 0xff00ff, 1, 100 );
+    plight.position.set( 50, 50, 50 );
+    this.scene.add( plight );
+    setPointLight(plight);
 
     // var alight = new THREE.AmbientLight( 0x404040 ); // soft white light
     // this.scene.add( alight );

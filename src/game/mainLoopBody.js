@@ -1,6 +1,7 @@
 import { Quaternion, Vector3, Object3D } from 'three';
 
 import {
+  agentRadius,
   cameraPositionRelativeToAgent,
   guideMovementInterval,
   guidePositionY,
@@ -10,23 +11,25 @@ import {
   getAgent,
   getCamera,
   getCameraBallJoint,
-  getGuide
+  getGuide,
+  getPointLight
 } from './gameObjectsStore';
 import { quaternion } from '../helpers';
 import { shaderMaterial } from '../graphics/materials.js';
 import controlEventsHandlerInstance from './controlEventsHandler.js';
 import graphicsInstance from './../graphics/graphics.js';
 import physicsInstance from './../physics/physics.js';
+import audioInstance from './audio';
 
-console.log('shaderMaterial', shaderMaterial);
-window.shaderMaterial=shaderMaterial;
+//console.log('shaderMaterial', shaderMaterial);
+//window.shaderMaterial=shaderMaterial;
 
-const mockCamera = new Object3D();
-mockCamera.position.set(...cameraPositionRelativeToAgent);
-//mockCamera.position.set(-50,-50,-50);
-mockCamera.lookAt( 0, 0, 0 );
+// const mockCamera = new Object3D();
+// mockCamera.position.set(...cameraPositionRelativeToAgent);
+// //mockCamera.position.set(-50,-50,-50);
+// mockCamera.lookAt( 0, 0, 0 );
 
-//const cameraBallJointRotationQuaternion = mockCamera.quaternion;
+// //const cameraBallJointRotationQuaternion = mockCamera.quaternion;
 const cameraBallJointRotationQuaternion = new Quaternion();
 
 function actOnCameraBallJoint(deltaTime) {
@@ -59,29 +62,39 @@ function actOnCameraBallJoint(deltaTime) {
 let transformAux;
 
 function actOnAgent(deltaTime) {
+  return;
+
+  // DEBUG:
   const {
     up, down, left, right,
   } = controlEventsHandlerInstance.pushFlags;
 
+  const agent = getAgent();
+  const forward = new Vector3(-agentRadius, 0, 0);
+  forward.applyQuaternion(cameraBallJointRotationQuaternion);
+  forward.add(agent.position);
+  
+  getPointLight().position.copy(forward);
+
   if (up) {
     const up = new Vector3(0, 1*pushMultiplier, 0);
     up.applyQuaternion(cameraBallJointRotationQuaternion);
-    getAgent().userData.physicsBody.applyForce(new window.Ammo.btVector3(up.x, up.y, up.z));
+    agent.userData.physicsBody.applyForce(new window.Ammo.btVector3(up.x, up.y, up.z));
     controlEventsHandlerInstance.pushFlags.up = false;
   } else if (down) {
     const down = new Vector3(0, -1*pushMultiplier, 0);
     down.applyQuaternion(cameraBallJointRotationQuaternion);
-    getAgent().userData.physicsBody.applyForce(new window.Ammo.btVector3(down.x, down.y, down.z));
+    agent.userData.physicsBody.applyForce(new window.Ammo.btVector3(down.x, down.y, down.z));
     controlEventsHandlerInstance.pushFlags.down = false;
   } else if (left) {
     const left = new Vector3(0, 0, 1*pushMultiplier);
     left.applyQuaternion(cameraBallJointRotationQuaternion);
-    getAgent().userData.physicsBody.applyForce(new window.Ammo.btVector3(left.x, left.y, left.z));
+    agent.userData.physicsBody.applyForce(new window.Ammo.btVector3(left.x, left.y, left.z));
     controlEventsHandlerInstance.pushFlags.left = false;
   } else if (right) {
     const right = new Vector3(0, 0, -1*pushMultiplier);
     right.applyQuaternion(cameraBallJointRotationQuaternion);
-    getAgent().userData.physicsBody.applyForce(new window.Ammo.btVector3(right.x, right.y, right.z));
+    agent.userData.physicsBody.applyForce(new window.Ammo.btVector3(right.x, right.y, right.z));
     controlEventsHandlerInstance.pushFlags.right = false;
   }
 }
@@ -118,6 +131,7 @@ function actOnActions() {
     const forward = new Vector3(-pushMultiplier*(time % guideMovementInterval)*10, 0, 0);
     forward.applyQuaternion(cameraBallJointRotationQuaternion);
     getAgent().userData.physicsBody.applyForce(new window.Ammo.btVector3(forward.x, forward.y, forward.z));
+    audioInstance.punch();
     controlEventsHandlerInstance.actionFlags.punch = false;
   }
 }

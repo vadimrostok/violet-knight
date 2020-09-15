@@ -20,8 +20,10 @@ export const getTargetMaterial = () => new MeshPhysicalMaterial( {
   emissive: parseInt(pad(Math.floor( Math.random() * ( 1 << 8 ) / 1.5 ).toString(16), 2) +
                      pad(Math.floor( Math.random() * ( 1 << 8 ) / 3 ).toString(16), 2) +
                      pad(Math.floor( Math.random() * ( 1 << 8 ) / 3 ).toString(16), 2), 16),
-  specular: 0x111111,
-  shininess: 200,
+  clearcoat: 0.5,
+  roughness: 0.5,
+  //specular: 0x111111,
+  //shininess: 200,
 } );
 
 // export const guideMaterial = new MeshPhysicalMaterial( {

@@ -2,6 +2,7 @@ import throttle from 'lodash/throttle';
 
 import { agentRadius } from '../constants';
 import { getCameraBallJoint } from '../game/gameObjectsStore';
+import audioInstance from '../game/audio';
 
 let Ammo;
 
@@ -102,15 +103,17 @@ class Physics {
       colObj0 = Ammo.wrapPointer(colObj0, Ammo.btRigidBody);
       colObj1 = Ammo.wrapPointer(colObj1, Ammo.btRigidBody);
       cp = Ammo.wrapPointer(cp, Ammo.btManifoldPoint);
-      if (colObj0.gameRole === 'target') {
+      if (colObj0.gameRole === 'target' && colObj0.removed !== true) {
         colObj0.mesh.visible = false;
         const physicsWorld = this.physicsWorld;
+        audioInstance.nextTarget();
+        colObj0.removed = true;
         setTimeout(function () {
           physicsWorld.removeRigidBody(colObj0);
         }, 10);
       }
       // trigger your events.
-      console.log("IN", colObj0, colObj1);
+      // console.log("IN", colObj0, colObj1);
     };
 
     var collisionCallbackPointer = Ammo.addFunction(collisionCallbackFunc.bind(this));

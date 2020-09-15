@@ -44,3 +44,6 @@ export const setCameraBallJoint = setter('cameraBallJoint');
 
 export const getGuide = getter('guide');
 export const setGuide = setter('guide');
+
+export const getPointLight = getter('pointLight');
+export const setPointLight = setter('pointLight');
