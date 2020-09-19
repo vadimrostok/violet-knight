@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import throttle from 'lodash/throttle';
 
 import { OBJLoader } from '../../node_modules/three/examples/jsm/loaders/OBJLoader.js';
+import Stats from '../../node_modules/three/examples/jsm/libs/stats.module.js';
 import { agentRadius, initialAgentPosition } from '../constants';
 import { getAgent, getScene, setAgent, setLevel } from './gameObjectsStore';
 import { getTargetMaterial } from '../graphics/materials';
@@ -28,17 +29,24 @@ function buildInfoHtml(obj) {
   );
 }
 
+const raycaster = new THREE.Raycaster();
+
 class Launcher {
   meshLoadingManager = new THREE.LoadingManager()
 
   clock = new THREE.Clock()
   time = 0
+  stats = null
   loop = () => {
     requestAnimationFrame( this.loop );
 
     const deltaTime = this.clock.getDelta();
 
     mainLoopBody(deltaTime);
+
+    if (this.stats) {
+      this.stats.update();
+    }
 
     this.time += deltaTime;
   }
@@ -130,8 +138,11 @@ class Launcher {
       const target = new THREE.Mesh( targetGeometry, getTargetMaterial() );
       target.position.copy(targetLocation);
       target.receiveShadow = true;
-      getScene().add( target );
-      physicsInstance.addTarget(target, i, { targetX, targetY, targetZ });
+
+      // will add at physics
+      // getScene().add( target );
+
+      physicsInstance.addTarget_new(target, i, { targetX, targetY, targetZ });
     }
 
 
@@ -203,6 +214,11 @@ class Launcher {
       });
 
     } else {
+
+      this.stats = new Stats();
+      this.stats.domElement.style.position = 'absolute';
+      this.stats.domElement.style.top = '0px';
+       gameBlock.appendChild( this.stats.domElement );
 
       controlEventsHandlerInstance.init({
         enableGravity: physicsInstance.enableGravity,

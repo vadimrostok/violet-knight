@@ -1,6 +1,6 @@
 export const agentRadius = 3;
 
-export const pushMultiplier = 50;
+export const pushMultiplier = 1250;
 
 export const initialAgentPosition = [0, 20, 0];
 
