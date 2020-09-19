@@ -51,6 +51,12 @@
      body {
          margin: 0;
          overflow: hidden;
+         -webkit-touch-callout: none;
+         -webkit-user-select: none;
+         -khtml-user-select: none;
+         -moz-user-select: none;
+         -ms-user-select: none;
+         user-select: none;
      }
      #info {
          position: fixed;
@@ -78,8 +84,8 @@
          transform: translate(-50%, -50%);
          font-size: 7rem;
          border: none;
-         border-radius: 0.5em;
-         padding: 0 0.5em;
+         border-radius: 5rem;
+         padding: 1rem 5rem;
          line-height: 7rem;
          color: white;
          letter-spacing: 1rem;
@@ -89,7 +95,7 @@
      .controls-container {
          
      }
-     .controls-container .control-item {
+     .control-item {
          position: fixed;
          background: red;
          color: white;
@@ -98,71 +104,149 @@
          border-radius: 1rem;
          font-family: sans-serif;
      }
-     .controls-container .control-up {
+     .control-up {
          left: 50%;
          top: 1rem;
          padding: 0 1rem;
          transform: translate(-50%, 0);
      }
-     .controls-container .control-down {
+     .control-down {
          left: 50%;
          bottom: 1rem;
          padding: 0 1rem;
          transform: translate(-50%, 0);
      }
-     .controls-container .control-left {
+     .control-left {
          top: 50%;
          left: 1rem;
          transform: translate(0, -50%);
      }
-     .controls-container .control-right {
+     .control-right {
          top: 50%;
          right: 1rem;
          transform: translate(0, -50%);
      }
-     .controls-container .control-clockwise {
+     .control-clockwise {
          top: 1rem;
          right: 1rem;
          padding: 0 1rem;
      }
-     .controls-container .control-anticlockwise {
+     .control-anticlockwise {
          top: 1rem;
          left: 1rem;
          padding: 0 1rem;
      }
-     .controls-container .control-info-left {
+     .control-info-left {
          bottom: 1rem;
          left: 1rem;
-         padding: 0 1rem;
          font-size: 1.5rem;
          padding: 1rem;
      }
-     .controls-container .control-info-right {
+     .control-info-right {
          bottom: 1rem;
          right: 1rem;
-         padding: 0 1rem;
          font-size: 1.5rem;
          padding: 1rem;
+     }
+     @keyframes flickerAnimation {
+         /* 0%   { opacity:1; }*/
+         /* 10%   { opacity:0.9; }
+            40%   { opacity:0.1; } */
+         0%  { opacity: 1; }
+         /* 60%   { opacity:0.1; }
+            90%   { opacity:0.9; } */
+         100% { opacity: 0; }
+     }
+     .controls-container .control-item-button {
+         position: absolute;
+         opacity: 1;
+         color: white;
+         background: black;
+         font-size: 2.5rem;
+         text-align: center;
+         width: 4rem;
+         margin: auto;
+         top: 50%;
+         border-radius: 4rem;
+         line-height: 4rem;
+         left: 50%;
+         transform: translate(-50%, -50%);
+         animation: flickerAnimation 1.5s infinite;
+     }
+     .control-item-secondary {
+         font-size: 1.5rem;
+         padding: 1rem;
+     }
+     .mobile-controls .control-item {
+         font-size: 2rem;
+         padding: 1.5rem;
+         border-radius: 5rem;
+     }
+     .control-item-transparent {
+         opacity: 0.5;
      }
      
     </style>
   </head>
   <body>
-      <div class="controls-container">
-          <div class="control-item control-up">↑</div>
-          <div class="control-item control-down">↓</div>
-          <div class="control-item control-left">←</div>
-          <div class="control-item control-right">→</div>
-          <div class="control-item control-clockwise">↷</div>
-          <div class="control-item control-anticlockwise">↶</div>
-          <div class="control-item control-info-left">tap anywhere and hold<br/>to swing</div>
-          <div class="control-item control-info-right">release to punch</div>
+      <div id="help-container" class="controls-container browser-controls">
+          <div class="control-item control-up">
+              ↑
+              <div class="control-item-button">w</div>
+          </div>
+          <div class="control-item control-down">
+              ↓
+              <div class="control-item-button">s</div>
+          </div>
+          <div class="control-item control-left">
+              ←
+              <div class="control-item-button">a</div>
+          </div>
+          <div class="control-item control-right">
+              →
+              <div class="control-item-button">d</div>
+          </div>
+          <div class="control-item control-clockwise">
+              ↷
+              <div class="control-item-button">e</div>
+          </div>
+          <div class="control-item control-anticlockwise">
+              ↶
+              <div class="control-item-button">q</div>
+          </div>
+          <div class="control-item control-info-left">hold space to swing</div>
+          <div class="control-item control-info-right">release space to punch</div>
       </div>
+      <div id="game-controls-container" class="controls-container hidden browser-controls">
+          <div class="control-item control-info-left control-item-transparent control-item-secondary">
+              Press H to toggle HELP
+          </div>
+      </div>
+
+      <div id="mobile-help-container"
+           class="mobile-controls-container hidden mobile-controls mobile-toush-ignore-rotation"
+      >
+          <div class="control-item control-clockwise control-item-secondary">hold 🥾 swing</div>
+          <div class="control-item control-anticlockwise control-item-secondary">drag to aim</div>
+          <div class="control-item control-info-right control-item-secondary">release 🥾 to punch</div>
+          <div class="mobile-toggle-help control-item control-info-left control-item-secondary">toggle HELP</div>
+      </div>
+      <div id="mobile-game-controls-container" class="controls-container hidden mobile-controls">
+          <div id="mobile-control-rotate-clockwise" class="control-item control-clockwise mobile-toush-ignore-rotation">
+              ↷
+          </div>
+          <div id="mobile-control-rotate-anticlockwise" class="control-item control-anticlockwise mobile-toush-ignore-rotation">
+              ↶
+          </div>
+          <div class="mobile-toggle-help control-item control-info-left mobile-toush-ignore-rotation">toggle HELP</div>
+          <div id="mobile-control-punch" class="control-item control-info-right mobile-toush-ignore-rotation">🥾[Punch!]</div>
+      </div>
+
       <div id="container" class="hidden"></div>
       <div id="info"></div>
       <div id="settings">
           <canvas id="settings-canvas"></canvas>
-          <button id="start">Start</button>
+          <button id="start" class="mobile-toush-ignore-rotation">Start</button>
       </div>
       <script src="./build/bundle.js"></script>
   </body>

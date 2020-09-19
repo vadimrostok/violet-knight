@@ -13,3 +13,9 @@ x real level prototype
 - sky box
 - timer
 - mobile controls
+
+
+
+sept 2020
+- faster rotation
+- mobile controls

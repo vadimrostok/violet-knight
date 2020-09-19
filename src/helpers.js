@@ -59,3 +59,11 @@ BufferLoader.prototype.load = function() {
 }
 
 export { BufferLoader };
+
+export function isTouchDevice() {
+  return 'ontouchstart' in window;
+}
+
+export function toRadians(angle) {
+  return angle * (Math.PI / 180);
+}

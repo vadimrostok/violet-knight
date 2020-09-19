@@ -54,7 +54,7 @@ class Graphics {
     var imagePrefix = "/public/cubemap/";
     var directions  = ["px", "nx", "py", "ny", "pz", "nz"];
     var imageSuffix = ".png";
-    var skyGeometry = new THREE.CubeGeometry( 1000, 1000, 1000 );	
+    var skyGeometry = new THREE.CubeGeometry( 5000, 5000, 5000 );	
     
     var materialArray = [];
     for (var i = 0; i < 6; i++)
@@ -87,7 +87,7 @@ class Graphics {
 
     // Camera:
 
-    this.camera = new THREE.PerspectiveCamera( 73, window.innerWidth / window.innerHeight, 0.2, 2000 );
+    this.camera = new THREE.PerspectiveCamera( 73, window.innerWidth / window.innerHeight, 0.2, 10000 );
     this.camera.position.x = 70;
     this.camera.position.y = 70;
     this.camera.position.z = 70;

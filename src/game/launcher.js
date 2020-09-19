@@ -7,16 +7,17 @@ import { OBJLoader } from '../../node_modules/three/examples/jsm/loaders/OBJLoad
 import { agentRadius, initialAgentPosition } from '../constants';
 import { getAgent, getScene, setAgent, setLevel } from './gameObjectsStore';
 import { getTargetMaterial } from '../graphics/materials';
+import { isTouchDevice } from '../helpers';
 import { levelMaterial } from './../graphics/materials.js';
-import controlEventsHandlerInstance from './controlEventsHandler.js';
-import graphicsInstance from './../graphics/graphics.js';
-import mainLoopBody from './mainLoopBody.js';
-import physicsInstance from './../physics/physics.js';
-import audioInstance from './audio.js';
 import {
   start as startSettingsBlock,
   stop as stopSettingsBlock,
 } from './settings';
+import audioInstance from './audio.js';
+import controlEventsHandlerInstance from './controlEventsHandler.js';
+import graphicsInstance from './../graphics/graphics.js';
+import mainLoopBody from './mainLoopBody.js';
+import physicsInstance from './../physics/physics.js';
 
 function buildInfoHtml(obj) {
   return Object.keys(obj).reduce(
@@ -156,26 +157,68 @@ class Launcher {
   pause() {}
   resume() {}
   async init() {
-    await physicsInstance.init();
-    graphicsInstance.init();
-    controlEventsHandlerInstance.init({
-      enableGravity: physicsInstance.enableGravity,
-      showInfo: this.showInfo,
-    });
-
-    this.initLevel(10);
 
     const startButton = document.getElementById('start');
     const settingsBlock = document.getElementById('settings');
     const gameBlock = document.getElementById('container');
 
+    const helpOverlay = document.getElementById('help-container');
+    const gameOverlay = document.getElementById('game-controls-container');
+
+    await physicsInstance.init();
+
+    graphicsInstance.init();
+
+    this.initLevel(10);
+
     startSettingsBlock();
-    startButton.addEventListener('click', () => {
-      stopSettingsBlock();
-      settingsBlock.classList.add('hidden');
-      gameBlock.classList.remove('hidden');
-      audioInstance.newGame();
-    });
+
+    if (isTouchDevice()) {
+
+      controlEventsHandlerInstance.mobileInit();
+
+      const mobileHelpOverlay = document.getElementById('mobile-help-container');
+      const mobileGameOverlay = document.getElementById('mobile-game-controls-container');
+      document.querySelectorAll('.browser-controls').forEach(node => {
+        node.classList.add('hidden');
+      });
+      document.querySelectorAll('.mobile-controls').forEach(node => {
+        node.classList.remove('hidden');
+      });
+      document.querySelectorAll('.mobile-toggle-help').forEach(node => {
+        node.addEventListener('click', () => {
+          mobileHelpOverlay.classList.toggle('hidden');
+          mobileGameOverlay.classList.toggle('hidden');
+        });
+      });
+      mobileGameOverlay.classList.add('hidden');
+
+      startButton.addEventListener('click', () => {
+        stopSettingsBlock();
+        settingsBlock.classList.add('hidden');
+        gameBlock.classList.remove('hidden');
+        mobileHelpOverlay.classList.add('hidden');
+        mobileGameOverlay.classList.remove('hidden');
+        audioInstance.newGame();
+      });
+
+    } else {
+
+      controlEventsHandlerInstance.init({
+        enableGravity: physicsInstance.enableGravity,
+        showInfo: this.showInfo,
+      });
+
+      startButton.addEventListener('click', () => {
+        stopSettingsBlock();
+        settingsBlock.classList.add('hidden');
+        gameBlock.classList.remove('hidden');
+        helpOverlay.classList.add('hidden');
+        gameOverlay.classList.remove('hidden');
+        audioInstance.newGame();
+      });
+
+    }
 
     // // FIXME: debug:
     // window.debugLauncher = this;

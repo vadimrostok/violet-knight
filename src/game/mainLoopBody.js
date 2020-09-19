@@ -1,4 +1,4 @@
-import { Quaternion, Vector3, Object3D } from 'three';
+import { Quaternion, Vector3, Object3D, Euler } from 'three';
 
 import {
   agentRadius,
@@ -14,7 +14,7 @@ import {
   getGuide,
   getPointLight
 } from './gameObjectsStore';
-import { quaternion } from '../helpers';
+import { quaternion, toRadians } from '../helpers';
 import { shaderMaterial } from '../graphics/materials.js';
 import controlEventsHandlerInstance from './controlEventsHandler.js';
 import graphicsInstance from './../graphics/graphics.js';
@@ -33,49 +33,61 @@ import audioInstance from './audio';
 const cameraBallJointRotationQuaternion = new Quaternion();
 
 function actOnCameraBallJoint(deltaTime) {
-  const {
-    left, right, up, down, rollUp, rollDown,
-  } = controlEventsHandlerInstance.cameraBallJointRotationFlags;
-
-  if (left || right) {
+  const { isTouching } = controlEventsHandlerInstance.touch;
+  if (isTouching) {
+    const { delta: { x, y } } = controlEventsHandlerInstance.touch;
     cameraBallJointRotationQuaternion.multiply(
-      quaternion([0, 1, 0], (right ? 1 : -1) * deltaTime),
+      quaternion([0, 1, 0], x / 10 * deltaTime),
     );
-  }
-
-  if (up || down) {
     cameraBallJointRotationQuaternion.multiply(
-      quaternion([0, 0, 1], (down ? -1 : 1) * deltaTime),
+      quaternion([0, 0, 1], -y / 10 * deltaTime),
     );
-  }
+    getCameraBallJoint().quaternion.copy(cameraBallJointRotationQuaternion);
+  } else {
+    const {
+      left, right, up, down, rollUp, rollDown,
+    } = controlEventsHandlerInstance.cameraBallJointRotationFlags;
 
-  if (rollUp || rollDown) {
-    cameraBallJointRotationQuaternion.multiply(
-      quaternion([1, 0, 0], (rollDown ? 1 : -1) * deltaTime),
-    );
-  }
+    if (left || right) {
+      cameraBallJointRotationQuaternion.multiply(
+        quaternion([0, 1, 0], (right ? 1 : -1) * deltaTime),
+      );
+    }
 
-  getCameraBallJoint().quaternion.copy(cameraBallJointRotationQuaternion);
+    if (up || down) {
+      cameraBallJointRotationQuaternion.multiply(
+        quaternion([0, 0, 1], (down ? -1 : 1) * deltaTime),
+      );
+    }
+
+    if (rollUp || rollDown) {
+      cameraBallJointRotationQuaternion.multiply(
+        quaternion([1, 0, 0], (rollDown ? 1 : -1) * deltaTime),
+      );
+    }
+
+    getCameraBallJoint().quaternion.copy(cameraBallJointRotationQuaternion);
+  }
 }
 
 
 let transformAux;
 
 function actOnAgent(deltaTime) {
-  return;
-
-  // DEBUG:
-  const {
-    up, down, left, right,
-  } = controlEventsHandlerInstance.pushFlags;
 
   const agent = getAgent();
   const forward = new Vector3(-agentRadius, 0, 0);
   forward.applyQuaternion(cameraBallJointRotationQuaternion);
   forward.add(agent.position);
-  
+
   getPointLight().position.copy(forward);
 
+  // DEBUG:
+  const {
+    up, down, left, right, help,
+  } = controlEventsHandlerInstance.pushFlags;
+
+  /*
   if (up) {
     const up = new Vector3(0, 1*pushMultiplier, 0);
     up.applyQuaternion(cameraBallJointRotationQuaternion);
@@ -96,6 +108,14 @@ function actOnAgent(deltaTime) {
     right.applyQuaternion(cameraBallJointRotationQuaternion);
     agent.userData.physicsBody.applyForce(new window.Ammo.btVector3(right.x, right.y, right.z));
     controlEventsHandlerInstance.pushFlags.right = false;
+  }
+  */
+  if (help) {
+    controlEventsHandlerInstance.pushFlags.help = false;
+    const helpOverlay = document.getElementById('help-container');
+    const gameOverlay = document.getElementById('game-controls-container');
+    helpOverlay.classList.toggle('hidden');
+    gameOverlay.classList.toggle('hidden');
   }
 }
 
