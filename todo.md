@@ -18,4 +18,8 @@ x real level prototype
 
 sept 2020
 - faster rotation
-- mobile controls
++ mobile controls
+- ammo in web worker
+- stop ball after impact
+- bounding ball (for
+
