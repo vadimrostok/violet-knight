@@ -54,7 +54,7 @@ class Graphics {
     var imagePrefix = "/public/cubemap/";
     var directions  = ["px", "nx", "py", "ny", "pz", "nz"];
     var imageSuffix = ".png";
-    var skyGeometry = new THREE.CubeGeometry( 5000, 5000, 5000 );	
+    var skyGeometry = new THREE.CubeGeometry( 5000, 5000, 5000 );
     
     var materialArray = [];
     for (var i = 0; i < 6; i++)
@@ -170,6 +170,35 @@ class Graphics {
     window.addEventListener( 'resize', this.onWindowResize, false );
 
     this.initSkyBox();
+  }
+  addDebugBall(x,y,z,color=0xffff00, radius=0.5) {
+    var geometry = new THREE.SphereGeometry( radius, 5, 5 );
+    var material = new THREE.MeshBasicMaterial( {color, side: THREE.DoubleSide} );
+    var sphere = new THREE.Mesh( geometry, material );
+    sphere.position.set(x,y,z);
+    this.scene.add( sphere );
+  }
+  addDebugTriangle(x1,y1,z1,x2,y2,z2,x3,y3,z3) {
+    console.log('addDebugTriangle', x1,y1,z1,x2,y2,z2,x3,y3,z3);
+    var geometry = new THREE.BufferGeometry();
+    // create a simple square shape. We duplicate the top left and bottom right
+    // vertices because each vertex needs to appear once per triangle.
+    var vertices = new Float32Array( [
+      x1,y1,z1,x2,y2,z2,x3,y3,z3,
+    ] );
+
+    // itemSize = 3 because there are 3 values (components) per vertex
+    geometry.addAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
+
+    const material = new THREE.MeshBasicMaterial( {
+      color: Math.floor( Math.random() * ( 1 << 24 ) ),
+      side: THREE.DoubleSide,
+    } );
+
+    const mesh = new THREE.Mesh( geometry, material );
+
+    this.scene.add( mesh );
+    //alert('wait');
   }
   createAgent(radius) {
     const agentMesh = new THREE.Mesh(

@@ -22,4 +22,6 @@ sept 2020
 - ammo in web worker
 - stop ball after impact
 - bounding ball (for
+- press r to restart
+- press f to freeze
 

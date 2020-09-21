@@ -5,6 +5,7 @@ import { ConvexObjectBreaker } from '../../node_modules/three/examples/jsm/misc/
 import {
   agentMass,
   agentRadius,
+  boundingSphereRadius,
   debrisLifetimeMs,
   fractureImpulse,
   targetMass
@@ -15,6 +16,8 @@ import {
   getScene
 } from '../game/gameObjectsStore';
 import audioInstance from '../game/audio';
+// FIXME:
+import graphicsInstance from '../graphics/graphics';
 
 let Ammo;
 
@@ -27,6 +30,8 @@ class Physics {
   physicsWorld = null
   transformAux = null
   tempBtVec3_1 = null
+  tempBtVec3_2 = null
+  tempBtVec3_3 = null
   convexBreaker = null
   margin = 0.05
   impactPoint = new Vector3()
@@ -40,6 +45,8 @@ class Physics {
           window.Ammo = Ammo = AmmoLib;
           this.transformAux = new Ammo.btTransform();
           this.tempBtVec3_1 = new Ammo.btVector3(0,0,0);
+          this.tempBtVec3_2 = new Ammo.btVector3(0,0,0);
+          this.tempBtVec3_3 = new Ammo.btVector3(0,0,0);
           resolve();
         });
       } else {
@@ -67,7 +74,9 @@ class Physics {
 
     // function collisionCallbackFunc( cp,colObj0,colObj1) {
     //   // FIXME:
+    //   // console.log('collision');
     //   return;
+      
     //   colObj0 = Ammo.wrapPointer(colObj0, Ammo.btRigidBody);
     //   colObj1 = Ammo.wrapPointer(colObj1, Ammo.btRigidBody);
     //   cp = Ammo.wrapPointer(cp, Ammo.btManifoldPoint);
@@ -112,7 +121,7 @@ class Physics {
     body.gameRole = 'agent';
 
     // body.setDamping(0.1, 0.1);
-    // body.setRestitution(3);
+    //body.setRestitution(0.5);
     body.setActivationState(4);
 
     agentMesh.userData.physicsBody = body;
@@ -120,6 +129,60 @@ class Physics {
     agentMesh.isAgent = true;
 
     this.dynamicObjects.push(agentMesh);
+
+    this.physicsWorld.addRigidBody( body );
+  }
+
+  addBoundingSphere(mesh) {
+    // const shape = new Ammo.btSphereShape( boundingSphereRadius );
+    //const shape = this.createTrianglePhysicsShape(mesh.geometry.attributes.position.array);
+
+    const coords = mesh.geometry.attributes.position.array;
+    const ammoMesh = new Ammo.btTriangleMesh();
+
+    const index = mesh.geometry.index.array;
+    for ( let i = 0, il = index.length; i < il; i += 3 ) {
+      const [index1, index2, index3] = [index[i], index[i+1], index[i+2]];
+
+      this.tempBtVec3_1.setValue(coords[index1*3], coords[index1*3 + 1], coords[index1*3 + 2]);
+      this.tempBtVec3_2.setValue(coords[index2*3], coords[index2*3 + 1], coords[index2*3 + 2]);
+      this.tempBtVec3_3.setValue(coords[index3*3], coords[index3*3 + 1], coords[index3*3 + 2]);
+      ammoMesh.addTriangle( this.tempBtVec3_1, this.tempBtVec3_2, this.tempBtVec3_3);
+      // graphicsInstance.addDebugTriangle(
+      //   coords[index1*3], coords[index1*3 + 1], coords[index1*3 + 2],
+      //   coords[index2*3], coords[index2*3 + 1], coords[index2*3 + 2],
+      //   coords[index3*3], coords[index3*3 + 1], coords[index3*3 + 2],
+      // );
+
+      // graphicsInstance.addDebugBall(coords[index1*3], coords[index1*3 + 1], coords[index1*3 + 2], 0xff0000);
+      // graphicsInstance.addDebugBall(coords[index2*3], coords[index2*3 + 1], coords[index2*3 + 2], 0x00ff00);
+      // graphicsInstance.addDebugBall(coords[index3*3], coords[index3*3 + 1], coords[index3*3 + 2], 0x0000ff);
+    }
+
+    // FIXME: or btConvexHullShape?
+    const shape = new Ammo.btBvhTriangleMeshShape(ammoMesh);
+
+    shape.setMargin( this.margin*100 );
+
+    const localInertia = new Ammo.btVector3( 0, 0, 0 );
+    shape.calculateLocalInertia( agentMass, localInertia );
+
+    const transform = new Ammo.btTransform();
+    transform.setIdentity();
+    transform.setOrigin(new Ammo.btVector3( 0,0,0 ));
+
+    const motionState = new Ammo.btDefaultMotionState(transform);
+
+    const rbInfo = new Ammo.btRigidBodyConstructionInfo( 0, motionState, shape, localInertia );
+
+    const body = new Ammo.btRigidBody( rbInfo );
+
+    
+    body.setRestitution(1);
+
+    body.gameRole = 'boundingSphere';
+
+    body.setActivationState(4);
 
     this.physicsWorld.addRigidBody( body );
   }
@@ -154,6 +217,22 @@ class Physics {
       const lastOne = ( i >= ( il - 3 ) );
       shape.addPoint( this.tempBtVec3_1, lastOne );
     }
+
+    return shape;
+  }
+
+  createTrianglePhysicsShape( coords ) {
+    const mesh = new Ammo.btTriangleMesh();
+
+    for ( let i = 0, il = coords.length; i < il; i += 9 ) {
+      this.tempBtVec3_1.setValue( coords[ i ], coords[ i + 1 ], coords[ i + 2 ] );
+      this.tempBtVec3_2.setValue( coords[ i + 3 ], coords[ i + 4 ], coords[ i + 5 ] );
+      this.tempBtVec3_3.setValue( coords[ i + 6 ], coords[ i + 7 ], coords[ i + 8 ] );
+      //const lastOne = ( i >= ( il - 3 ) );
+      mesh.addTriangle( this.tempBtVec3_1, this.tempBtVec3_2, this.tempBtVec3_3);
+    }
+
+    const shape = new Ammo.btBvhTriangleMeshShape(mesh);
 
     return shape;
   }
@@ -213,7 +292,7 @@ class Physics {
 
   update = ( deltaTime ) => {
 
-    this.physicsWorld.stepSimulation( deltaTime*3, 10 );
+    this.physicsWorld.stepSimulation( deltaTime*5, 10 );
     // this.physicsWorld.stepSimulation( deltaTime, 10 );
 
     // Update objects
@@ -231,6 +310,22 @@ class Physics {
         const quaternion = this.transformAux.getRotation();
 
         const [ x, y, z ] = [position.x(), position.y(), position.z()];
+
+        if (objThree.isAgent) {
+          if (Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2) + Math.pow(z, 2)) > boundingSphereRadius) {
+            this.stopAgentAfterImpact();
+            this.transformAux.setOrigin(new Ammo.btVector3(
+              objThree.userData.prevPosition.x,
+              objThree.userData.prevPosition.y,
+              objThree.userData.prevPosition.z,
+            ));
+            getAgent().userData.physicsBody.setWorldTransform(this.transformAux);
+            continue;
+          } else {
+            objThree.userData.prevPosition = { x, y, z };
+          }
+        }
+
         objThree.position.set(x, y, z);
         objThree.quaternion.set( quaternion.x(), quaternion.y(), quaternion.z(), quaternion.w() );
 
@@ -356,16 +451,19 @@ class Physics {
 	  userData1.collided = true;
         }
 
-        this.stopAgentAfterImpact();
-
         this.clearDebris(debris);
 
-        const target = userData0.gameRole === 'target' ? rb0 : rb1;
-        const targetUserData = userData0.gameRole === 'target' ? userData0 : userData1;
+        if ((userData0 && userData0.gameRole === 'target') || (userData1 && userData1.gameRole === 'target')) {
 
-        if (targetUserData.wasHit !== true) {
-          audioInstance.nextTarget();
-          targetUserData.wasHit = true;
+          this.stopAgentAfterImpact();
+
+          const target = userData0.gameRole === 'target' ? rb0 : rb1;
+          const targetUserData = userData0.gameRole === 'target' ? userData0 : userData1;
+
+          if (targetUserData.wasHit !== true) {
+            audioInstance.nextTarget();
+            targetUserData.wasHit = true;
+          }
         }
       }
     }

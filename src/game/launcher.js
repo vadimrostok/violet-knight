@@ -4,8 +4,11 @@ import * as THREE from 'three';
 import throttle from 'lodash/throttle';
 
 import { OBJLoader } from '../../node_modules/three/examples/jsm/loaders/OBJLoader.js';
-import Stats from '../../node_modules/three/examples/jsm/libs/stats.module.js';
-import { agentRadius, initialAgentPosition } from '../constants';
+import {
+  agentRadius,
+  boundingSphereRadius,
+  initialAgentPosition
+} from '../constants';
 import { getAgent, getScene, setAgent, setLevel } from './gameObjectsStore';
 import { getTargetMaterial } from '../graphics/materials';
 import { isTouchDevice } from '../helpers';
@@ -14,6 +17,7 @@ import {
   start as startSettingsBlock,
   stop as stopSettingsBlock,
 } from './settings';
+import Stats from '../../node_modules/three/examples/jsm/libs/stats.module.js';
 import audioInstance from './audio.js';
 import controlEventsHandlerInstance from './controlEventsHandler.js';
 import graphicsInstance from './../graphics/graphics.js';
@@ -37,6 +41,7 @@ class Launcher {
   clock = new THREE.Clock()
   time = 0
   stats = null
+  physicsWorker = new Worker('/src/physics/worker.js');
   loop = () => {
     requestAnimationFrame( this.loop );
 
@@ -153,11 +158,22 @@ class Launcher {
     const agent = graphicsInstance.createAgent(agentRadius);
     agent.position.set(...initialAgentPosition);
 
-    // // FIXME: debug:
-    // window.debugAgent = agent;
+    // const boundingSphere = new THREE.Mesh(
+    //   new THREE.SphereBufferGeometry( boundingSphereRadius, 30, 30 ),
+    //   new THREE.MeshBasicMaterial( {
+    //     color: 0xffffff,
+    //     side: THREE.DoubleSide,
+    //     wireframe: true,
+    //   } ),
+    // );
+    // getScene().add(boundingSphere);
+    // physicsInstance.addBoundingSphere(boundingSphere);
 
     physicsInstance.setAgentPhysicsBody(agent);
     setAgent(agent);
+
+    // FIXME:
+    window.agent = agent;
 
     // const axesHelper = new THREE.AxesHelper( 500 );
     // getScene().add( axesHelper );
@@ -177,6 +193,7 @@ class Launcher {
     const gameOverlay = document.getElementById('game-controls-container');
 
     await physicsInstance.init();
+    this.physicsWorker.postMessage({ task: 'init' });
 
     graphicsInstance.init();
 
@@ -204,14 +221,16 @@ class Launcher {
       });
       mobileGameOverlay.classList.add('hidden');
 
-      startButton.addEventListener('click', () => {
+      const startGame = () => {
         stopSettingsBlock();
         settingsBlock.classList.add('hidden');
         gameBlock.classList.remove('hidden');
         mobileHelpOverlay.classList.add('hidden');
         mobileGameOverlay.classList.remove('hidden');
         audioInstance.newGame();
-      });
+      };
+
+      startButton.addEventListener('click', startGame);
 
     } else {
 
@@ -225,14 +244,19 @@ class Launcher {
         showInfo: this.showInfo,
       });
 
-      startButton.addEventListener('click', () => {
+      const startGame = () => {
         stopSettingsBlock();
         settingsBlock.classList.add('hidden');
         gameBlock.classList.remove('hidden');
         helpOverlay.classList.add('hidden');
         gameOverlay.classList.remove('hidden');
         audioInstance.newGame();
-      });
+      };
+
+      startButton.addEventListener('click', startGame);
+
+      // FIXME:
+      startGame();
 
     }
 
