@@ -7,7 +7,8 @@ export const boundingSphereRadius = 1500;
 export const fractureImpulse = 7;
 export const debrisLifetimeMs = 5000;
 
-export const pushMultiplier = 115250;
+//export const pushMultiplier = 115250;
+export const pushMultiplier = 5250;
 
 export const initialAgentPosition = [0, 0, 0];
 

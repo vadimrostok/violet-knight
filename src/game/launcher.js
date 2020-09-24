@@ -3,13 +3,21 @@ import 'regenerator-runtime/runtime.js';
 import * as THREE from 'three';
 import throttle from 'lodash/throttle';
 
+import { ConvexObjectBreaker } from '../../node_modules/three/examples/jsm/misc/ConvexObjectBreaker.js';
 import { OBJLoader } from '../../node_modules/three/examples/jsm/loaders/OBJLoader.js';
 import {
   agentRadius,
   boundingSphereRadius,
-  initialAgentPosition
+  initialAgentPosition,
+  targetMass
 } from '../constants';
-import { getAgent, getScene, setAgent, setLevel } from './gameObjectsStore';
+import {
+  getAgent,
+  getScene,
+  setAgent,
+  setLevel,
+  setTarget
+} from './gameObjectsStore';
 import { getTargetMaterial } from '../graphics/materials';
 import { isTouchDevice } from '../helpers';
 import { levelMaterial } from './../graphics/materials.js';
@@ -23,6 +31,7 @@ import controlEventsHandlerInstance from './controlEventsHandler.js';
 import graphicsInstance from './../graphics/graphics.js';
 import mainLoopBody from './mainLoopBody.js';
 import physicsInstance from './../physics/physics.js';
+import physicsWorkerInterfaceInstance from './../physics/workerInterfaceModule.js';
 
 function buildInfoHtml(obj) {
   return Object.keys(obj).reduce(
@@ -41,7 +50,8 @@ class Launcher {
   clock = new THREE.Clock()
   time = 0
   stats = null
-  physicsWorker = new Worker('/src/physics/worker.js');
+  convexBreaker = new ConvexObjectBreaker();
+  
   loop = () => {
     requestAnimationFrame( this.loop );
 
@@ -58,73 +68,11 @@ class Launcher {
 
   infoNode = document.getElementById('info')
 
-
-  //showInfo = throttle(() => {
   showInfo = () => {
     this.infoNode.innerHTML = buildInfoHtml(controlEventsHandlerInstance.info);
   }
-  //}, 250);
 
-  getLevelMesh(levelId) {
-    return new Promise((resolve, reject) => {
-      new OBJLoader(this.meshLoadingManager)
-        .setPath('./models/')
-        .load(`level${levelId}.obj`, function (object) {
-
-          const mesh = object.children[0];
-
-          //material.side = THREE.DoubleSide;
-          mesh.material = levelMaterial;
-
-          const levelSizeMultiplier = 5;
-          //const levelSizeMultiplier = 0.0005;
-
-          mesh.geometry.scale( levelSizeMultiplier, levelSizeMultiplier, levelSizeMultiplier );
-          object.position.set(0,0,0);
-
-          mesh.castShadow = true;
-          mesh.receiveShadow = true;
-
-          resolve(mesh);
-        });
-    });
-  }
-
-  async initLevel(targetCount) {
-
-    /*
-    async initLevel(levelId) {
-    // Create level:
-
-    const level = await this.getLevelMesh(levelId);
-    physicsInstance.setLevelPhysicsBody(level);
-    setLevel(level);
-    getScene().add(level);
-
-    */
-
-    physicsInstance.initPhysics();
-
-
-    /*
-    const targetGeometry = new THREE.BoxBufferGeometry(
-      150,
-      152,
-      154,
-    );
-    const targetLocation = new THREE.Vector3(
-      -150,
-      0,
-      0
-    );
-    const target = new THREE.Mesh( targetGeometry, getTargetMaterial() );
-    target.position.copy(targetLocation);
-    getScene().add( target );
-    physicsInstance.addTarget(target, 0);
-
-    */
-
-    
+  generateTargets(targetCount) {
     for (let i = 0; i < targetCount; i++) {
       const [targetX, targetY, targetZ] = [1 + Math.random()*i*10,
                                            1 + Math.random()*i*10,
@@ -144,45 +92,33 @@ class Launcher {
       target.position.copy(targetLocation);
       target.receiveShadow = true;
 
-      // will add at physics
-      // getScene().add( target );
-
-      physicsInstance.addTarget_new(target, i, { targetX, targetY, targetZ });
+      getScene().add(target);
+      this.convexBreaker.prepareBreakableObject(
+        target, targetMass, new self.THREE.Vector3(), new self.THREE.Vector3(), true,
+      );
+      setTarget(i, target);
+      physicsWorkerInterfaceInstance.addTarget(
+        target.position, target.quaternion, target.geometry.attributes.position.array, i,
+      );
     }
+  }
 
-
-    //window.debugLevelMesh = level;
-
-    // Create agent:
-
+  generateAgent() {
     const agent = graphicsInstance.createAgent(agentRadius);
     agent.position.set(...initialAgentPosition);
 
-    // const boundingSphere = new THREE.Mesh(
-    //   new THREE.SphereBufferGeometry( boundingSphereRadius, 30, 30 ),
-    //   new THREE.MeshBasicMaterial( {
-    //     color: 0xffffff,
-    //     side: THREE.DoubleSide,
-    //     wireframe: true,
-    //   } ),
-    // );
-    // getScene().add(boundingSphere);
-    // physicsInstance.addBoundingSphere(boundingSphere);
+    physicsWorkerInterfaceInstance.setAgentPhysicsBody(initialAgentPosition);
+    // physicsInstance.setAgentPhysicsBody(agent);
 
-    physicsInstance.setAgentPhysicsBody(agent);
     setAgent(agent);
 
     // FIXME:
     window.agent = agent;
-
-    // const axesHelper = new THREE.AxesHelper( 500 );
-    // getScene().add( axesHelper );
-
-    this.loop();
   }
 
   pause() {}
   resume() {}
+
   async init() {
 
     const startButton = document.getElementById('start');
@@ -192,12 +128,17 @@ class Launcher {
     const helpOverlay = document.getElementById('help-container');
     const gameOverlay = document.getElementById('game-controls-container');
 
-    await physicsInstance.init();
-    this.physicsWorker.postMessage({ task: 'init' });
+    // await physicsInstance.init();
+
+    await physicsWorkerInterfaceInstance.init();
 
     graphicsInstance.init();
+    // physicsInstance.initPhysics();
 
-    this.initLevel(10);
+    this.generateTargets(10);
+    this.generateAgent(10);
+
+    this.loop();
 
     startSettingsBlock();
 
@@ -240,7 +181,6 @@ class Launcher {
        gameBlock.appendChild( this.stats.domElement );
 
       controlEventsHandlerInstance.init({
-        enableGravity: physicsInstance.enableGravity,
         showInfo: this.showInfo,
       });
 
@@ -259,10 +199,6 @@ class Launcher {
       startGame();
 
     }
-
-    // // FIXME: debug:
-    // window.debugLauncher = this;
-    // window.debugControlsInstance = controlEventsHandlerInstance;
   }
 };
 

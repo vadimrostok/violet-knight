@@ -18,7 +18,8 @@ import { quaternion, toRadians } from '../helpers';
 import { shaderMaterial } from '../graphics/materials.js';
 import controlEventsHandlerInstance from './controlEventsHandler.js';
 import graphicsInstance from './../graphics/graphics.js';
-import physicsInstance from './../physics/physics.js';
+// import physicsInstance from './../physics/physics.js';
+import physicsWorkerInterfaceInstance from './../physics/workerInterfaceModule.js';
 import audioInstance from './audio';
 
 //console.log('shaderMaterial', shaderMaterial);
@@ -70,8 +71,6 @@ function actOnCameraBallJoint(deltaTime) {
   }
 }
 
-
-let transformAux;
 
 function actOnAgent(deltaTime) {
 
@@ -128,7 +127,7 @@ function actOnActions() {
 
   if (toggleGravity !== gravityEnabled) {
     gravityEnabled = toggleGravity;
-    physicsInstance.setGravity(cameraBallJointRotationQuaternion, gravityEnabled ? -10 : 0);
+    //physicsInstance.setGravity(cameraBallJointRotationQuaternion, gravityEnabled ? -10 : 0);
   }
 
   if (showPunchControls) {
@@ -150,25 +149,19 @@ function actOnActions() {
   if (punch) {
     const forward = new Vector3(-pushMultiplier*(time % guideMovementInterval)*10, 0, 0);
     forward.applyQuaternion(cameraBallJointRotationQuaternion);
-    getAgent().userData.physicsBody.applyForce(new window.Ammo.btVector3(forward.x, forward.y, forward.z));
+    physicsWorkerInterfaceInstance.punch(forward);
     audioInstance.punch();
     controlEventsHandlerInstance.actionFlags.punch = false;
   }
 }
 
-function ensureLocalObjects() {
-  if (!transformAux) {
-    transformAux = new window.Ammo.btTransform();
-  }
-}
-
 export default function(deltaTime) {
-  ensureLocalObjects();
   actOnCameraBallJoint(deltaTime);
   actOnAgent(deltaTime);
   actOnActions();
 
-  physicsInstance.update(deltaTime);
+  // physicsInstance.update(deltaTime);
+  // physicsWorkerInterfaceInstance.update(deltaTime);
 
   graphicsInstance.update();
 
