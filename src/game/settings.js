@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+import { Scene, WebGLRenderer, PerspectiveCamera, Mesh, PlaneGeometry } from 'three';
 
 import { shaderMaterial } from '../graphics/materials';
 
@@ -11,12 +11,12 @@ export function start() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 
-  const scene = new THREE.Scene();
-  const renderer = new THREE.WebGLRenderer({canvas: canvas, antialias: true});
-  const camera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientWidth, 1, 1000);
+  const scene = new Scene();
+  const renderer = new WebGLRenderer({canvas: canvas, antialias: true});
+  const camera = new PerspectiveCamera(45, canvas.clientWidth / canvas.clientWidth, 1, 1000);
 
-  const quad = new THREE.Mesh(
-    new THREE.PlaneGeometry(20, 20),
+  const quad = new Mesh(
+    new PlaneGeometry(20, 20),
     shaderMaterial,
   );
   scene.add(quad);

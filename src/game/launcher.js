@@ -1,25 +1,17 @@
 import 'regenerator-runtime/runtime.js';
 
-import { Clock, BoxBufferGeometry, Vector3, Mesh } from 'three';
-import throttle from 'lodash/throttle';
+import { Clock } from 'three';
 
-import { OBJLoader } from '../../node_modules/three/examples/jsm/loaders/OBJLoader.js';
 import {
   agentRadius,
-  boundingSphereRadius,
   initialAgentPosition,
-  targetMass
 } from '../constants';
 import {
   getAgent,
   getScene,
   setAgent,
-  setLevel,
-  setTarget
 } from './gameObjectsStore';
-import { getTargetMaterial } from '../graphics/materials';
 import { isTouchDevice } from '../helpers';
-import { levelMaterial } from './../graphics/materials.js';
 import {
   start as startSettingsBlock,
   stop as stopSettingsBlock,
@@ -29,8 +21,7 @@ import audioInstance from './audio.js';
 import controlEventsHandlerInstance from './controlEventsHandler.js';
 import graphicsInstance from './../graphics/graphics.js';
 import mainLoopBody from './mainLoopBody.js';
-import physicsInstance from './../physics/physics.js';
-import physicsWorkerInterfaceInstance from './../physics/workerInterfaceModule.js';
+import physicsWorkerInterfaceInstance from './../physics/physicsWorkerInterface.js';
 
 class Launcher {
   clock = new Clock()

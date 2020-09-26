@@ -1,5 +1,5 @@
 /* 
-// Synchronous phytics implementation:
+// Synchronous physics implementation:
 
 import { Vector3 } from 'three';
 import throttle from 'lodash/throttle';

@@ -1,5 +1,9 @@
-import * as THREE from 'three';
-import { BoxBufferGeometry, Mesh, Vector3 } from 'three';
+import {
+  BoxBufferGeometry, Mesh, Vector3, Shape, CubeGeometry, MeshBasicMaterial,
+  SphereGeometry, DoubleSide, ImageUtils, BackSide, MeshFaceMaterial, WebGLRenderer,
+  Color, PerspectiveCamera, DirectionalLight, PointLight, ShapeGeometry, Group,
+  BufferGeometry, BufferAttribute, SphereBufferGeometry, Scene,
+} from 'three';
 import { ConvexObjectBreaker } from '../../node_modules/three/examples/jsm/misc/ConvexObjectBreaker.js';
 
 import {
@@ -27,7 +31,7 @@ import {
 } from '../game/gameObjectsStore';
 
 function getArrowShape(guideWidth, guideLength, guideConeWidth, guideConeHeight) {
-  const arrow = new THREE.Shape();
+  const arrow = new Shape();
   
   arrow.moveTo(guideWidth/2, 0);
   arrow.lineTo(guideWidth/2, guideLength/2 - guideConeHeight);
@@ -60,16 +64,16 @@ class Graphics {
     var imagePrefix = "/public/cubemap/";
     var directions  = ["px", "nx", "py", "ny", "pz", "nz"];
     var imageSuffix = ".png";
-    var skyGeometry = new THREE.CubeGeometry( 5000, 5000, 5000 );
+    var skyGeometry = new CubeGeometry( 5000, 5000, 5000 );
     
     var materialArray = [];
     for (var i = 0; i < 6; i++)
-      materialArray.push( new THREE.MeshBasicMaterial({
-	map: THREE.ImageUtils.loadTexture( imagePrefix + directions[i] + imageSuffix ),
-	side: THREE.BackSide,
+      materialArray.push( new MeshBasicMaterial({
+	map: ImageUtils.loadTexture( imagePrefix + directions[i] + imageSuffix ),
+	side: BackSide,
       }));
-    var skyMaterial = new THREE.MeshFaceMaterial( materialArray );
-    var skyBox = new THREE.Mesh( skyGeometry, skyMaterial );
+    var skyMaterial = new MeshFaceMaterial( materialArray );
+    var skyBox = new Mesh( skyGeometry, skyMaterial );
     this.scene.add( skyBox );
   }
 
@@ -110,7 +114,7 @@ class Graphics {
 
     // Renderer:
 
-    this.renderer = new THREE.WebGLRenderer();
+    this.renderer = new WebGLRenderer();
     this.renderer.shadowMapEnabled = true;
     this.renderer.setPixelRatio( window.devicePixelRatio );
     this.renderer.setSize( window.innerWidth, window.innerHeight );
@@ -120,13 +124,13 @@ class Graphics {
 
     // Scene:
 
-    this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color( 0xbfd1e5 );
+    this.scene = new Scene();
+    this.scene.background = new Color( 0xbfd1e5 );
     setScene(this.scene);
 
     // Camera:
 
-    this.camera = new THREE.PerspectiveCamera( 73, window.innerWidth / window.innerHeight, 0.2, 10000 );
+    this.camera = new PerspectiveCamera( 73, window.innerWidth / window.innerHeight, 0.2, 10000 );
     this.camera.position.x = 70;
     this.camera.position.y = 70;
     this.camera.position.z = 70;
@@ -135,7 +139,7 @@ class Graphics {
 
     // Lights:
 
-    const light = new THREE.DirectionalLight( 0xffffff, 1 );
+    const light = new DirectionalLight( 0xffffff, 1 );
     //light.position.set( 500, 500, 500 );
     light.position.set( 300, 300, 300 );
     light.castShadow = true;
@@ -151,40 +155,29 @@ class Graphics {
     light.shadow.mapSize.y = 1024 * 1;
     this.scene.add( light );
 
-    // var helper = new THREE.DirectionalLightHelper( light, 5 );
-    // this.scene.add( helper );
-
-    var plight = new THREE.PointLight( 0xff00ff, 1, 100 );
+    var plight = new PointLight( 0xff00ff, 1, 100 );
     plight.position.set( 50, 50, 50 );
     this.scene.add( plight );
     setPointLight(plight);
 
-    // var alight = new THREE.AmbientLight( 0x404040 ); // soft white light
-    // this.scene.add( alight );
-
 
     // Camera ball joint:
 
-    this.cameraBallJoint = new THREE.Group();
+    this.cameraBallJoint = new Group();
     this.cameraBallJoint.position.set(...initialAgentPosition);
 
     this.camera.position.set(...cameraPositionRelativeToAgent);
     this.camera.lookAt(0, 0, 0);
 
-    // FIXME: debug
-    window.camera = this.camera;
-
-
-
     // Guide:
 
-    const lineGeometry = new THREE.ShapeGeometry(
+    const lineGeometry = new ShapeGeometry(
       getArrowShape(1, guideLength, 3, 5)
     );
     //lineGeometry.rotation.set(Math.PI/2, Math.PI/2, Math.PI/2);
     //lineGeometry.rotateX(this.camera.rotation.x);
 
-    this.guide = new THREE.Mesh( lineGeometry, shaderMaterial);
+    this.guide = new Mesh( lineGeometry, shaderMaterial);
 
     this.guide.visible = false;
     this.guide.position.x = 15;
@@ -194,10 +187,6 @@ class Graphics {
     this.guide.quaternion.multiply(quaternion([1, 0, 0], -Math.PI/4));
 
     setGuide(this.guide);
-
-    //FIXME: debug
-    window.guide = this.guide;
-
 
     this.cameraBallJoint.add(this.camera);
     this.cameraBallJoint.add(this.guide);
@@ -211,14 +200,14 @@ class Graphics {
     this.initSkyBox();
   }
   addDebugBall(x,y,z,color=0xffff00, radius=0.5) {
-    var geometry = new THREE.SphereGeometry( radius, 5, 5 );
-    var material = new THREE.MeshBasicMaterial( {color, side: THREE.DoubleSide} );
-    var sphere = new THREE.Mesh( geometry, material );
+    var geometry = new SphereGeometry( radius, 5, 5 );
+    var material = new MeshBasicMaterial( {color, side: DoubleSide} );
+    var sphere = new Mesh( geometry, material );
     sphere.position.set(x,y,z);
     this.scene.add( sphere );
   }
   addDebugTriangle(x1,y1,z1,x2,y2,z2,x3,y3,z3) {
-    var geometry = new THREE.BufferGeometry();
+    var geometry = new BufferGeometry();
     // create a simple square shape. We duplicate the top left and bottom right
     // vertices because each vertex needs to appear once per triangle.
     var vertices = new Float32Array( [
@@ -226,20 +215,20 @@ class Graphics {
     ] );
 
     // itemSize = 3 because there are 3 values (components) per vertex
-    geometry.addAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
+    geometry.addAttribute( 'position', new BufferAttribute( vertices, 3 ) );
 
-    const material = new THREE.MeshBasicMaterial( {
+    const material = new MeshBasicMaterial( {
       color: Math.floor( Math.random() * ( 1 << 24 ) ),
-      side: THREE.DoubleSide,
+      side: DoubleSide,
     } );
 
-    const mesh = new THREE.Mesh( geometry, material );
+    const mesh = new Mesh( geometry, material );
 
     this.scene.add( mesh );
   }
   createAgent(radius) {
-    const agentMesh = new THREE.Mesh(
-      new THREE.SphereBufferGeometry( radius, 20, 20 ),
+    const agentMesh = new Mesh(
+      new SphereBufferGeometry( radius, 20, 20 ),
       agentMaterial,
     );
 

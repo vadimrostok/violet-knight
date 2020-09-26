@@ -19,7 +19,7 @@ import { shaderMaterial } from '../graphics/materials.js';
 import controlEventsHandlerInstance from './controlEventsHandler.js';
 import graphicsInstance from './../graphics/graphics.js';
 // import physicsInstance from './../physics/physics.js';
-import physicsWorkerInterfaceInstance from './../physics/workerInterfaceModule.js';
+import physicsWorkerInterfaceInstance from './../physics/physicsWorkerInterface.js';
 import audioInstance from './audio';
 
 const cameraBallJointRotationQuaternion = new Quaternion();

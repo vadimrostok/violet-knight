@@ -23,7 +23,7 @@ import { vecToArray } from '../helpers';
 import audioInstance from '../game/audio';
 import graphicsInstance from '../graphics/graphics';
 
-class WorkerInterface {
+class PhysicsWorkerInterface {
   physicsWorker = new window.Worker('/lib/physics-worker.compiled.js');
   resolveInit = null
   convexBreaker = new ConvexObjectBreaker()
@@ -38,15 +38,17 @@ class WorkerInterface {
     }});
 
     return new Promise((resolve, reject) => {
+
+      // Handle messages from worker:
+
       this.physicsWorker.onmessage = (e) => {
         switch(e.data.task) {
         case 'ready':
           resolve();
           break;
+
         case 'update':
           const { x, y, z } = e.data.position;
-
-          //console.log('update', e.data);
 
           if (e.data.role === 'agent') {
             const agent = getAgent();
@@ -57,29 +59,24 @@ class WorkerInterface {
             agent.quaternion.set( ...e.data.quaternion );
           } else if (e.data.role === 'target') {
             const target = getTarget(e.data.id);
-            //console.log('update target', target, x, y, z, ...e.data.quaternion);
 
             target.position.set(x, y, z);
             target.quaternion.set( ...e.data.quaternion );
           } else if (e.data.role === 'fragment') {
             const fragment = getFragment(e.data.id);
-            //console.log('update target', target, x, y, z, ...e.data.quaternion);
 
             fragment.position.set(x, y, z);
             fragment.quaternion.set( ...e.data.quaternion );
           }
 
           break;
+
         case 'subdivideByImpact': {
           const { impactPoint, impactNormal, vel, angVel } = e.data;
-
-          // console.log('subdivideByImpact', impactPoint, impactNormal, vel, angVel);
 
           const debris = this.convexBreaker.subdivideByImpact(
             getTarget(e.data.id), new Vector3(...impactPoint), new Vector3(...impactNormal), 2, 2,
           );
-
-          // console.log(debris.length, impactPoint, impactNormal);
 
           const numObjects = debris.length;
           const time = (new Date()).getTime();
@@ -107,13 +104,8 @@ class WorkerInterface {
 
           this.addDepris(fragments);
 
-          // setTimeout(() => {
-          //   for (const debreeIndex in debris) {
-          //     getScene().remove(debris[debreeIndex]);
-          //   }
-          // }, debrisLifetimeMs);
-
           break;
+
         }
 
         case 'removeDebris': {
@@ -129,19 +121,24 @@ class WorkerInterface {
             }
           }
           break;
+
         }
 
         case 'playAudio': {
           audioInstance.nextTarget();
           break;
+
         }
 
         }
       };
     });
   }
+
+  // Send to worker methods:
+
   addDepris(fragments) {
-    // fragmentId, position, quaternion, vertexArray, mass, velocity, angularVelocity
+    // [fragmentId, position, quaternion, vertexArray, mass, velocity, angularVelocity]
     this.physicsWorker.postMessage({
       task: 'createFragments',
       fragments,
@@ -167,6 +164,6 @@ class WorkerInterface {
   }
 }
 
-const workerInterfaceInstance = new WorkerInterface();
+const workerInterfaceInstance = new PhysicsWorkerInterface();
 
 export default workerInterfaceInstance;
