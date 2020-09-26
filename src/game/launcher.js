@@ -144,7 +144,7 @@ class Launcher {
 
     if (isTouchDevice()) {
 
-      controlEventsHandlerInstance.mobileInit();
+      controlEventsHandlerInstance.touchInit();
 
       const mobileHelpOverlay = document.getElementById('mobile-help-container');
       const mobileGameOverlay = document.getElementById('mobile-game-controls-container');
@@ -174,6 +174,8 @@ class Launcher {
       startButton.addEventListener('click', startGame);
 
     } else {
+
+      controlEventsHandlerInstance.mouseInit();
 
       this.stats = new Stats();
       this.stats.domElement.style.position = 'absolute';

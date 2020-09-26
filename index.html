@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta name="viewport" content="user-scalable=0"> 
     <script src="./lib/ammo.2.js"></script>
     <script id="vertexShader" type="x-shader/x-vertex">
 
@@ -18,10 +19,10 @@
 
      void main()	{
 
-       vPosition = position;
-       vColor = color;
+         vPosition = position;
+         vColor = color;
 
-       gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+         gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
 
      }
 
@@ -39,16 +40,18 @@
 
      void main()	{
 
-       vec4 color = vec4( vColor );
-       color.r += sin( vPosition.y * 20.0 - time ) * 1.7;
-       color.g -= abs(cos( vPosition.y * 10.0 - time/3.0 ));
+         vec4 color = vec4( vColor );
+         color.r += sin( vPosition.y * 20.0 - time ) * 1.7;
+         color.g -= abs(cos( vPosition.y * 10.0 - time/3.0 ));
 
-       gl_FragColor = color;
+         gl_FragColor = color;
 
      }
     </script>
     <style>
      body {
+         touch-action: none !important;
+         overscroll-behavior: contain !important;
          margin: 0;
          overflow: hidden;
          -webkit-touch-callout: none;
@@ -94,6 +97,17 @@
      }
      .controls-container {
          
+     }
+     .control-item-multi-container {
+         position: fixed;
+     }
+     .control-item-multi {
+         background: red;
+         color: white;
+         font-weight: bold;
+         font-size: 5rem;
+         border-radius: 1rem;
+         font-family: sans-serif;
      }
      .control-item {
          position: fixed;
@@ -177,7 +191,7 @@
          font-size: 1.5rem;
          padding: 1rem;
      }
-     .mobile-controls .control-item {
+     .mobile-controls .control-item-multi, .mobile-controls .control-item {
          font-size: 2rem;
          padding: 1.5rem;
          border-radius: 5rem;
@@ -189,65 +203,91 @@
     </style>
   </head>
   <body>
-      <div id="help-container" class="controls-container browser-controls">
-          <div class="control-item control-up">
-              ↑
-              <div class="control-item-button">w</div>
-          </div>
-          <div class="control-item control-down">
-              ↓
-              <div class="control-item-button">s</div>
-          </div>
-          <div class="control-item control-left">
-              ←
-              <div class="control-item-button">a</div>
-          </div>
-          <div class="control-item control-right">
-              →
-              <div class="control-item-button">d</div>
-          </div>
-          <div class="control-item control-clockwise">
-              ↷
-              <div class="control-item-button">e</div>
-          </div>
-          <div class="control-item control-anticlockwise">
-              ↶
-              <div class="control-item-button">q</div>
-          </div>
-          <div class="control-item control-info-left">hold space to swing</div>
-          <div class="control-item control-info-right">release space to punch</div>
+    <div id="help-container" class="controls-container browser-controls">
+      <div class="control-item control-up">
+        ↑
+        <div class="control-item-button">w</div>
       </div>
-      <div id="game-controls-container" class="controls-container hidden browser-controls">
-          <div class="control-item control-info-left control-item-transparent control-item-secondary">
-              Press H to toggle HELP
-          </div>
+      <div class="control-item control-down">
+        ↓
+        <div class="control-item-button">s</div>
       </div>
+      <div class="control-item control-left">
+        ←
+        <div class="control-item-button">a</div>
+      </div>
+      <div class="control-item control-right">
+        →
+        <div class="control-item-button">d</div>
+      </div>
+      <div class="control-item control-clockwise">
+        ↷
+        <div class="control-item-button">e</div>
+      </div>
+      <div class="control-item control-anticlockwise">
+        ↶
+        <div class="control-item-button">q</div>
+      </div>
+      <div class="control-item control-info-left">
+        Press H to toggle HELP
+        <br/>
+        Press F to Freeze
+      </div>
+      <div class="control-item control-info-right">
+        Hold SPACE to Swing
+        <br/>
+        and Release SPACE to PUNCH
+      </div>
+    </div>
+    <div id="game-controls-container" class="controls-container hidden browser-controls">
+      <div class="control-item control-info-left control-item-transparent control-item-secondary">
+        Press H to toggle HELP
+      </div>
+    </div>
 
-      <div id="mobile-help-container"
-           class="mobile-controls-container hidden mobile-controls mobile-toush-ignore-rotation"
-      >
-          <div class="control-item control-clockwise control-item-secondary">hold 🥾 swing</div>
-          <div class="control-item control-anticlockwise control-item-secondary">drag to aim</div>
-          <div class="control-item control-info-right control-item-secondary">release 🥾 to punch</div>
-          <div class="mobile-toggle-help control-item control-info-left control-item-secondary">toggle HELP</div>
+    <div id="mobile-help-container"
+         class="mobile-controls-container hidden mobile-controls mobile-toush-ignore-rotation"
+    >
+      <div class="control-item control-info-right control-item-secondary">
+        Hold 🥾 to SWING
+        <br/>
+        And Release 🥾 to PUNCH
       </div>
-      <div id="mobile-game-controls-container" class="controls-container hidden mobile-controls">
-          <div id="mobile-control-rotate-clockwise" class="control-item control-clockwise mobile-toush-ignore-rotation">
-              ↷
-          </div>
-          <div id="mobile-control-rotate-anticlockwise" class="control-item control-anticlockwise mobile-toush-ignore-rotation">
-              ↶
-          </div>
-          <div class="mobile-toggle-help control-item control-info-left mobile-toush-ignore-rotation">toggle HELP</div>
-          <div id="mobile-control-punch" class="control-item control-info-right mobile-toush-ignore-rotation">🥾[Punch!]</div>
+      <div class="control-item-multi-container control-info-left control-item-secondary">
+        <div class="control-item-multi">
+          Drag to AIM
+        </div>
+        <br/><br/>
+        <div class="mobile-toggle-help control-item-multi">
+          Toggle HELP
+        </div>
       </div>
+    </div>
+    <div id="mobile-game-controls-container" class="controls-container hidden mobile-controls">
+      <div id="mobile-control-rotate-clockwise" class="control-item control-clockwise mobile-toush-ignore-rotation">
+        ↷
+      </div>
+      <div id="mobile-control-rotate-anticlockwise" class="control-item control-anticlockwise mobile-toush-ignore-rotation">
+        ↶
+      </div>
+      <div class="control-item-multi-container control-info-left mobile-toush-ignore-rotation">
+        <div id="mobile-freeze" class="control-item-multi">
+          FREEZE
+        </div>
+        <br/><br/>
+        <div class="mobile-toggle-help control-item-multi">
+          Toggle HELP
+        </div>
+      </div>
+      <div id="mobile-control-punch" class="control-item control-info-right mobile-toush-ignore-rotation">🥾[Punch!]</div>
+    </div>
 
-      <div id="container" class="hidden"></div>
-      <div id="info"></div>
-      <div id="settings">
-          <canvas id="settings-canvas"></canvas>
-          <button id="start" class="mobile-toush-ignore-rotation">Start</button>
-      </div>
-      <script src="./build/bundle.js"></script>
+    <div id="container" class="hidden"></div>
+    <div id="info"></div>
+    <div id="settings">
+      <canvas id="settings-canvas"></canvas>
+      <button id="start" class="mobile-toush-ignore-rotation">Start</button>
+    </div>
+    <script src="./build/bundle.js"></script>
   </body>
 </html>

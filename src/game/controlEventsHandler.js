@@ -44,8 +44,8 @@ class ControlEventsHandler {
     freeze: false,
     restart: false,
   }
-  touch = {
-    isTouching: false,
+  pointer = {
+    isMoving: false,
     delta: {
       x: 0,
       y: 0,
@@ -66,12 +66,17 @@ class ControlEventsHandler {
     this.showInfo();
   }
 
-  mobileInit() {
+  touchInit() {
     let isDragging = false;
     const previousMousePosition = {
       x: 0,
       y: 0
     };
+
+    document.getElementById('mobile-freeze').addEventListener('click', () => {
+      this.actionFlags.freeze = true;
+    });
+
     const mobileRotateClockwise = document.getElementById('mobile-control-rotate-clockwise');
     mobileRotateClockwise.addEventListener('touchstart', (e) => {
       this.cameraBallJointRotationFlags.rollUp = true;
@@ -114,7 +119,7 @@ class ControlEventsHandler {
       if (touch.target.classList.contains('mobile-toush-ignore-rotation')) {
         return;
       }
-      this.touch.isTouching = true;
+      this.pointer.isMoving = true;
 
       previousMousePosition.x = touch.clientX;
       previousMousePosition.y = touch.clientY;
@@ -122,17 +127,44 @@ class ControlEventsHandler {
     document.addEventListener('touchmove', (e) => {
       const touch = e.touches[0] || e.changedTouches[0];
 
-      this.touch.delta.x = touch.clientX - previousMousePosition.x;
-      this.touch.delta.y = touch.clientY - previousMousePosition.y;
+      this.pointer.delta.x = touch.clientX - previousMousePosition.x;
+      this.pointer.delta.y = touch.clientY - previousMousePosition.y;
 
       previousMousePosition.x = touch.clientX;
       previousMousePosition.y = touch.clientY;
     });
     document.addEventListener('touchcancel', (e) => {
-      this.touch.isTouching = false;
+      this.pointer.isMoving = false;
     });
     document.addEventListener('touchend', (e) => {
-      this.touch.isTouching = false;
+      this.pointer.isMoving = false;
+    });
+
+  }
+
+  mouseInit() {
+    let isDragging = false;
+    const previousMousePosition = {
+      x: 0,
+      y: 0
+    };
+    const mouseMultiplier = 2;
+
+    document.addEventListener('mousedown', (e) => {
+      this.pointer.isMoving = true;
+
+      previousMousePosition.x = e.clientX;
+      previousMousePosition.y = e.clientY;
+    });
+    document.addEventListener('mousemove', (e) => {
+      this.pointer.delta.x = mouseMultiplier*(e.clientX - previousMousePosition.x);
+      this.pointer.delta.y = mouseMultiplier*(e.clientY - previousMousePosition.y);
+
+      previousMousePosition.x = e.clientX;
+      previousMousePosition.y = e.clientY;
+    });
+    document.addEventListener('mouseup', (e) => {
+      this.pointer.isMoving = false;
     });
 
   }

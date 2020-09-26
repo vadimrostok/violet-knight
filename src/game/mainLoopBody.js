@@ -34,9 +34,9 @@ import audioInstance from './audio';
 const cameraBallJointRotationQuaternion = new Quaternion();
 
 function actOnCameraBallJoint(deltaTime) {
-  const { isTouching } = controlEventsHandlerInstance.touch;
-  if (isTouching) {
-    const { delta: { x, y } } = controlEventsHandlerInstance.touch;
+  const { isMoving } = controlEventsHandlerInstance.pointer;
+  if (isMoving) {
+    const { delta: { x, y } } = controlEventsHandlerInstance.pointer;
     cameraBallJointRotationQuaternion.multiply(
       quaternion([0, 1, 0], x / 10 * deltaTime),
     );
