@@ -1,6 +1,6 @@
 self.importScripts(
-  'lib/ammo.js',
-  'node_modules/@babel/polyfill/dist/polyfill.min.js',
+  './ammo.js',
+  '../node_modules/@babel/polyfill/dist/polyfill.min.js',
 );
 
 function arrayToVec3Source(arr) {
