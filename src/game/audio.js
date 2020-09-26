@@ -19,8 +19,8 @@ class Audio {
       const bufferLoader = new BufferLoader(
         this.context,
         [
-          `/public/punch.wav`,
-          ...montyPythonSounds.map(id => `/public/mp/${id}.wav`)
+          `/public/punch.wav.m4a`,
+          ...montyPythonSounds.map(id => `/public/mp/${id}.wav.m4a`)
         ],
         buffers => resolve(buffers.map(buffer => {
           let source = this.context.createBufferSource();
@@ -44,17 +44,24 @@ class Audio {
   targets = []
   async greeting() {
     const [punch, greeting] = await this.buffersPromise;
+
     greeting.play();
   }
   async punch() {
     const [punch] = await this.buffersPromise;
+
     punch.play();
   }
   async nextTarget() {
     const [punch, greeting, ...targetBuffers] = await this.buffersPromise;
+
     targetBuffers[this.targets.pop()].play();
+
+    if (!this.targets.length) {
+      this.setAndShuffleTargets();
+    }
   }
-  newGame() {
+  setAndShuffleTargets() {
     this.targets = [];
     for (let i = 0; i < 10; i++) {
       this.targets.push(i);
@@ -66,7 +73,10 @@ class Audio {
       const temp = this.targets[i];
       this.targets[i] = this.targets[j];
       this.targets[j] = temp;
-    }
+    } 
+  }
+  newGame() {
+    this.setAndShuffleTargets();
 
     // Initial sound:
     this.greeting();

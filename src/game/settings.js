@@ -44,4 +44,5 @@ export function start() {
 
 export function stop() {
   cancelled = true;
+  document.getElementById('settings-canvas').remove();
 }

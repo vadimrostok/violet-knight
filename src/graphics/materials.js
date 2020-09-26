@@ -5,8 +5,6 @@ import {
 
 export const levelMaterial = new MeshPhysicalMaterial( {
   color: 0xff5533,
-  specular: 0x111111,
-  shininess: 200,
 } );
 
 function pad(n, size) {
@@ -22,15 +20,7 @@ export const getTargetMaterial = () => new MeshPhysicalMaterial( {
                      pad(Math.floor( Math.random() * ( 1 << 8 ) / 3 ).toString(16), 2), 16),
   clearcoat: 0.5,
   roughness: 0.5,
-  //specular: 0x111111,
-  //shininess: 200,
 } );
-
-// export const guideMaterial = new MeshPhysicalMaterial( {
-//   color: 0x22ffff,
-//   specular: 0x11ff11,
-//   shininess: 350,
-// } );
 
 export const guideMaterial = new MeshBasicMaterial( {
   color: 0xffffff,

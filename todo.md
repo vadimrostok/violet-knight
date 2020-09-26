@@ -12,6 +12,7 @@ x add ability to view 1st person and 3rd person
 x use https://pybullet.org/Bullet/BulletFull/classbtConvexHullShape.html ?
 x press r to restart
 x if no break: bounce
+x faster rotation
 + ball should emit light
 + use other controls, not orbit
 + use worker
@@ -27,9 +28,8 @@ x if no break: bounce
 + create shapes player need to hit
 + press f to freeze
 + freeze on mobile
-- faster rotation
-- disable chrome reload gesture
-- more targets
-- mouse targeting
++ disable chrome reload gesture
++ mouse targeting
++ more targets
 - refactoring
 

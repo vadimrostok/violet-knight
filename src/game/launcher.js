@@ -1,9 +1,8 @@
 import 'regenerator-runtime/runtime.js';
 
-import * as THREE from 'three';
+import { Clock, BoxBufferGeometry, Vector3, Mesh } from 'three';
 import throttle from 'lodash/throttle';
 
-import { ConvexObjectBreaker } from '../../node_modules/three/examples/jsm/misc/ConvexObjectBreaker.js';
 import { OBJLoader } from '../../node_modules/three/examples/jsm/loaders/OBJLoader.js';
 import {
   agentRadius,
@@ -33,24 +32,10 @@ import mainLoopBody from './mainLoopBody.js';
 import physicsInstance from './../physics/physics.js';
 import physicsWorkerInterfaceInstance from './../physics/workerInterfaceModule.js';
 
-function buildInfoHtml(obj) {
-  return Object.keys(obj).reduce(
-    (str, key) => (typeof obj[key] === 'object') ?
-      `${str}<br/>${key} : <p class="log-sub-tree">${buildInfoHtml(obj[key])}</p>` :
-      `${str}<br/>${key} : ${obj[key]}`,
-    ''
-  );
-}
-
-const raycaster = new THREE.Raycaster();
-
 class Launcher {
-  meshLoadingManager = new THREE.LoadingManager()
-
-  clock = new THREE.Clock()
+  clock = new Clock()
   time = 0
   stats = null
-  convexBreaker = new ConvexObjectBreaker();
   
   loop = () => {
     requestAnimationFrame( this.loop );
@@ -68,35 +53,12 @@ class Launcher {
 
   infoNode = document.getElementById('info')
 
-  showInfo = () => {
-    this.infoNode.innerHTML = buildInfoHtml(controlEventsHandlerInstance.info);
-  }
+  showInfo = () => {}
 
   generateTargets(targetCount) {
     for (let i = 0; i < targetCount; i++) {
-      const [targetX, targetY, targetZ] = [1 + Math.random()*i*10,
-                                           1 + Math.random()*i*10,
-                                           1 + Math.random()*i*10];
-      const targetGeometry = new THREE.BoxBufferGeometry(
-        targetX, targetY, targetZ
-      );
-      const xInvert = (i % 2 === 0 ? 1 : -1);
-      const yInvert = (i % 6 > 3 ? 1 : -1);
-      const zInvert = (i % 4 >= 2 ? 1 : -1);
-      const targetLocation = new THREE.Vector3(
-        50 + xInvert*i*10 + xInvert*Math.random()*i*10,
-        50 + yInvert*i*10 + zInvert*Math.random()*i*10,
-        50 + zInvert*i*10 + zInvert*Math.random()*i*10,
-      );
-      const target = new THREE.Mesh( targetGeometry, getTargetMaterial() );
-      target.position.copy(targetLocation);
-      target.receiveShadow = true;
+      const target = graphicsInstance.createRandomizedTarget(i);
 
-      getScene().add(target);
-      this.convexBreaker.prepareBreakableObject(
-        target, targetMass, new self.THREE.Vector3(), new self.THREE.Vector3(), true,
-      );
-      setTarget(i, target);
       physicsWorkerInterfaceInstance.addTarget(
         target.position, target.quaternion, target.geometry.attributes.position.array, i,
       );
@@ -108,12 +70,8 @@ class Launcher {
     agent.position.set(...initialAgentPosition);
 
     physicsWorkerInterfaceInstance.setAgentPhysicsBody(initialAgentPosition);
-    // physicsInstance.setAgentPhysicsBody(agent);
 
     setAgent(agent);
-
-    // FIXME:
-    window.agent = agent;
   }
 
   pause() {}
@@ -121,86 +79,83 @@ class Launcher {
 
   async init() {
 
-    const startButton = document.getElementById('start');
-    const settingsBlock = document.getElementById('settings');
-    const gameBlock = document.getElementById('container');
-
-    const helpOverlay = document.getElementById('help-container');
-    const gameOverlay = document.getElementById('game-controls-container');
-
-    // await physicsInstance.init();
-
     await physicsWorkerInterfaceInstance.init();
 
     graphicsInstance.init();
-    // physicsInstance.initPhysics();
 
-    this.generateTargets(10);
-    this.generateAgent(10);
+    this.generateTargets(20);
+    this.generateAgent();
 
     this.loop();
 
     startSettingsBlock();
 
     if (isTouchDevice()) {
-
       controlEventsHandlerInstance.touchInit();
-
-      const mobileHelpOverlay = document.getElementById('mobile-help-container');
-      const mobileGameOverlay = document.getElementById('mobile-game-controls-container');
-      document.querySelectorAll('.browser-controls').forEach(node => {
-        node.classList.add('hidden');
-      });
-      document.querySelectorAll('.mobile-controls').forEach(node => {
-        node.classList.remove('hidden');
-      });
-      document.querySelectorAll('.mobile-toggle-help').forEach(node => {
-        node.addEventListener('click', () => {
-          mobileHelpOverlay.classList.toggle('hidden');
-          mobileGameOverlay.classList.toggle('hidden');
-        });
-      });
-      mobileGameOverlay.classList.add('hidden');
-
-      const startGame = () => {
-        stopSettingsBlock();
-        settingsBlock.classList.add('hidden');
-        gameBlock.classList.remove('hidden');
-        mobileHelpOverlay.classList.add('hidden');
-        mobileGameOverlay.classList.remove('hidden');
-        audioInstance.newGame();
-      };
-
-      startButton.addEventListener('click', startGame);
-
+      this.touchUIInit();
     } else {
-
       controlEventsHandlerInstance.mouseInit();
-
-      this.stats = new Stats();
-      this.stats.domElement.style.position = 'absolute';
-      this.stats.domElement.style.top = '0px';
-       gameBlock.appendChild( this.stats.domElement );
-
-      controlEventsHandlerInstance.init({
-        showInfo: this.showInfo,
-      });
-
-      const startGame = () => {
-        stopSettingsBlock();
-        settingsBlock.classList.add('hidden');
-        gameBlock.classList.remove('hidden');
-        helpOverlay.classList.add('hidden');
-        gameOverlay.classList.remove('hidden');
-        audioInstance.newGame();
-      };
-
-      startButton.addEventListener('click', startGame);
-
-      // FIXME:
-      startGame();
-
+      this.browserUIInit();
     }
+  }
+  touchUIInit() {
+    const startButton = document.getElementById('start');
+    const settingsBlock = document.getElementById('settings');
+    const gameBlock = document.getElementById('container');
+    const mobileHelpOverlay = document.getElementById('mobile-help-container');
+    const mobileGameOverlay = document.getElementById('mobile-game-controls-container');
+
+    document.querySelectorAll('.browser-controls').forEach(node => {
+      node.classList.add('hidden');
+    });
+    document.querySelectorAll('.mobile-controls').forEach(node => {
+      node.classList.remove('hidden');
+    });
+    document.querySelectorAll('.mobile-toggle-help').forEach(node => {
+      node.addEventListener('click', () => {
+        mobileHelpOverlay.classList.toggle('hidden');
+        mobileGameOverlay.classList.toggle('hidden');
+      });
+    });
+    mobileGameOverlay.classList.add('hidden');
+
+    const startGame = () => {
+      stopSettingsBlock();
+      settingsBlock.classList.add('hidden');
+      gameBlock.classList.remove('hidden');
+      mobileHelpOverlay.classList.add('hidden');
+      mobileGameOverlay.classList.remove('hidden');
+      audioInstance.newGame();
+    };
+
+    startButton.addEventListener('click', startGame);
+  }
+  browserUIInit() {
+    const startButton = document.getElementById('start');
+    const settingsBlock = document.getElementById('settings');
+    const gameBlock = document.getElementById('container');
+    const helpOverlay = document.getElementById('help-container');
+    const gameOverlay = document.getElementById('game-controls-container');
+
+    this.stats = new Stats();
+    this.stats.domElement.style.position = 'absolute';
+    this.stats.domElement.style.top = '0px';
+    gameBlock.appendChild( this.stats.domElement );
+
+    controlEventsHandlerInstance.init({
+      showInfo: this.showInfo,
+    });
+
+    const startGame = () => {
+      stopSettingsBlock();
+      settingsBlock.classList.add('hidden');
+      gameBlock.classList.remove('hidden');
+      helpOverlay.classList.add('hidden');
+      gameOverlay.classList.remove('hidden');
+      audioInstance.newGame();
+    };
+
+    startButton.addEventListener('click', startGame);
   }
 };
 

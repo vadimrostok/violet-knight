@@ -1,24 +1,29 @@
 import * as THREE from 'three';
+import { BoxBufferGeometry, Mesh, Vector3 } from 'three';
+import { ConvexObjectBreaker } from '../../node_modules/three/examples/jsm/misc/ConvexObjectBreaker.js';
 
 import {
-  cameraPositionRelativeToAgent,
-  guidePositionY,
-  initialAgentPosition,
-  guideLength,
-} from '../constants';
-import {
+  agentMaterial,
   createAgentMaterial,
+  getTargetMaterial,
   guideMaterial,
   shaderMaterial,
-  agentMaterial,
 } from './materials';
+import {
+  cameraPositionRelativeToAgent,
+  guideLength,
+  guidePositionY,
+  initialAgentPosition,
+  targetMass,
+} from '../constants';
 import { quaternion } from '../helpers';
 import {
   setCamera,
   setCameraBallJoint,
   setGuide,
-  setScene,
   setPointLight,
+  setScene,
+  setTarget,
 } from '../game/gameObjectsStore';
 
 function getArrowShape(guideWidth, guideLength, guideConeWidth, guideConeHeight) {
@@ -42,6 +47,7 @@ class Graphics {
   cameraBallJoint = null
   scene = null
   guide = null
+  convexBreaker = new ConvexObjectBreaker();
   container = document.getElementById('container')
 
   onWindowResize = () => {
@@ -61,12 +67,45 @@ class Graphics {
       materialArray.push( new THREE.MeshBasicMaterial({
 	map: THREE.ImageUtils.loadTexture( imagePrefix + directions[i] + imageSuffix ),
 	side: THREE.BackSide,
-        receiveShadow: false,
       }));
     var skyMaterial = new THREE.MeshFaceMaterial( materialArray );
     var skyBox = new THREE.Mesh( skyGeometry, skyMaterial );
     this.scene.add( skyBox );
   }
+
+  createRandomizedTarget(index) {
+    const [targetX, targetY, targetZ] = [
+      10 + (index % 2)*10 + Math.random()*index*10,
+      10 + (index % 6)*10 + Math.random()*index*10,
+      10 + (index % 5)*10 + Math.random()*index*10
+    ];
+    const targetGeometry = new BoxBufferGeometry(
+      targetX, targetY, targetZ
+    );
+    const xInvert = (index % 2 === 0 ? 1 : -1);
+    const yInvert = (index % 6 > 3 ? 1 : -1);
+    const zInvert = (index % 4 >= 2 ? 1 : -1);
+    const multiplier = 30;
+    const targetLocation = new Vector3(
+      50 + xInvert*index*multiplier + xInvert*Math.random()*index*multiplier,
+      50 + yInvert*index*multiplier + zInvert*Math.random()*index*multiplier,
+      50 + zInvert*index*multiplier + zInvert*Math.random()*index*multiplier,
+    );
+    const target = new Mesh( targetGeometry, getTargetMaterial() );
+
+    target.position.copy(targetLocation);
+    target.castShadow = false;
+    target.receiveShadow = false;
+
+    this.scene.add(target);
+    this.convexBreaker.prepareBreakableObject(
+      target, targetMass, new Vector3(), new Vector3(), true,
+    );
+    setTarget(index, target);
+
+    return target;
+  }
+
   init() {
 
     // Renderer:
@@ -108,8 +147,8 @@ class Graphics {
     light.shadow.camera.bottom = - sLight;
     light.shadow.camera.near = dLight / 30;
     light.shadow.camera.far = dLight;
-    light.shadow.mapSize.x = 1024 * 5;
-    light.shadow.mapSize.y = 1024 * 5;
+    light.shadow.mapSize.x = 1024 * 1;
+    light.shadow.mapSize.y = 1024 * 1;
     this.scene.add( light );
 
     // var helper = new THREE.DirectionalLightHelper( light, 5 );
@@ -179,7 +218,6 @@ class Graphics {
     this.scene.add( sphere );
   }
   addDebugTriangle(x1,y1,z1,x2,y2,z2,x3,y3,z3) {
-    console.log('addDebugTriangle', x1,y1,z1,x2,y2,z2,x3,y3,z3);
     var geometry = new THREE.BufferGeometry();
     // create a simple square shape. We duplicate the top left and bottom right
     // vertices because each vertex needs to appear once per triangle.
@@ -198,7 +236,6 @@ class Graphics {
     const mesh = new THREE.Mesh( geometry, material );
 
     this.scene.add( mesh );
-    //alert('wait');
   }
   createAgent(radius) {
     const agentMesh = new THREE.Mesh(
@@ -206,8 +243,8 @@ class Graphics {
       agentMaterial,
     );
 
-    agentMesh.receiveShadow = true;
-    agentMesh.castShadow = true;
+    agentMesh.receiveShadow = false;
+    agentMesh.castShadow = false;
 
     this.scene.add(agentMesh);
 

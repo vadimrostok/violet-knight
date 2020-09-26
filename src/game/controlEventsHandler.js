@@ -9,9 +9,6 @@ import {
 } from './gameObjectsStore';
 import { quaternion } from '../helpers';
 
-// FIXME: debug:
-window.THREE = THREE;
-
 import throttle from 'lodash/throttle';
 
 
@@ -56,14 +53,11 @@ class ControlEventsHandler {
 
   updateInfo() {
     return;
-    // DEBUG:
-    this.info = {
-      ...this.info,
-      // cameraBallJointRotationFlags: this.cameraBallJointRotationFlags,
-      // cameraBallJointRotationQuaternion: this.cameraBallJointRotationQuaternion,
-      // cameraBallJointMovementFlags: this.cameraBallJointMovementFlags,
-    };
-    this.showInfo();
+    // // DEBUG:
+    // this.info = {
+    //   ...this.info,
+    // };
+    // this.showInfo();
   }
 
   touchInit() {
