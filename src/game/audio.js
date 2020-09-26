@@ -19,8 +19,8 @@ class Audio {
       const bufferLoader = new BufferLoader(
         this.context,
         [
-          `/public/punch.wav.m4a`,
-          ...montyPythonSounds.map(id => `/public/mp/${id}.wav.m4a`)
+          `public/punch.wav.m4a`,
+          ...montyPythonSounds.map(id => `public/mp/${id}.wav.m4a`)
         ],
         buffers => resolve(buffers.map(buffer => {
           let source = this.context.createBufferSource();
