@@ -61,7 +61,7 @@ class Graphics {
     this.renderer.setSize( window.innerWidth, window.innerHeight );
   }
   initSkyBox = () => {
-    var imagePrefix = "/public/cubemap/";
+    var imagePrefix = "public/cubemap/";
     var directions  = ["px", "nx", "py", "ny", "pz", "nz"];
     var imageSuffix = ".png";
     var skyGeometry = new CubeGeometry( 5000, 5000, 5000 );
