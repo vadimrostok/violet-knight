@@ -24,7 +24,7 @@ import audioInstance from '../game/audio';
 import graphicsInstance from '../graphics/graphics';
 
 class PhysicsWorkerInterface {
-  physicsWorker = new window.Worker('/lib/physics-worker.compiled.js');
+  physicsWorker = new window.Worker('lib/physics-worker.compiled.js');
   resolveInit = null
   convexBreaker = new ConvexObjectBreaker()
   init() {
