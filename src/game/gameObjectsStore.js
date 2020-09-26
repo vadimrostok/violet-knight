@@ -40,6 +40,10 @@ const targets = {};
 export const setTarget = (id, target) => targets[id] = target;
 export const getTarget = id => targets[id];
 
+const fragments = {};
+export const setFragment = (id, fragment) => fragments[id] = fragment;
+export const getFragment = id => fragments[id];
+
 export const getCameraBallJoint = getter('cameraBallJoint');
 export const setCameraBallJoint = setter('cameraBallJoint');
 

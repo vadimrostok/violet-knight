@@ -82,9 +82,9 @@ function actOnAgent(deltaTime) {
   getPointLight().position.copy(forward);
 
   // DEBUG:
-  const {
-    up, down, left, right, help,
-  } = controlEventsHandlerInstance.pushFlags;
+  // const {
+  //   up, down, left, right, help,
+  // } = controlEventsHandlerInstance.pushFlags;
 
   /*
   if (up) {
@@ -109,13 +109,6 @@ function actOnAgent(deltaTime) {
     controlEventsHandlerInstance.pushFlags.right = false;
   }
   */
-  if (help) {
-    controlEventsHandlerInstance.pushFlags.help = false;
-    const helpOverlay = document.getElementById('help-container');
-    const gameOverlay = document.getElementById('game-controls-container');
-    helpOverlay.classList.toggle('hidden');
-    gameOverlay.classList.toggle('hidden');
-  }
 }
 
 let time = 0;
@@ -123,6 +116,7 @@ let gravityEnabled = controlEventsHandlerInstance.actionFlags.toggleGravity;
 function actOnActions() {
   const {
     toggleGravity, showPunchControls, hidePunchControls, punchControlsActive, punch,
+    help, freeze, restart,
   } = controlEventsHandlerInstance.actionFlags;
 
   if (toggleGravity !== gravityEnabled) {
@@ -152,6 +146,23 @@ function actOnActions() {
     physicsWorkerInterfaceInstance.punch(forward);
     audioInstance.punch();
     controlEventsHandlerInstance.actionFlags.punch = false;
+  }
+
+  if (help) {
+    controlEventsHandlerInstance.actionFlags.help = false;
+    const helpOverlay = document.getElementById('help-container');
+    const gameOverlay = document.getElementById('game-controls-container');
+    helpOverlay.classList.toggle('hidden');
+    gameOverlay.classList.toggle('hidden');
+  }
+
+  if (freeze) {
+    controlEventsHandlerInstance.actionFlags.freeze = false;
+    physicsWorkerInterfaceInstance.freeze();
+  }
+
+  if (restart) {
+    console.log('restart');
   }
 }
 

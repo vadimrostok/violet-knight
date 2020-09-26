@@ -67,3 +67,7 @@ export function isTouchDevice() {
 export function toRadians(angle) {
   return angle * (Math.PI / 180);
 }
+
+export function vecToArray(obj) {
+  return obj.w ? [obj.x, obj.y, obj.z, obj.w] : [obj.x, obj.y, obj.z];
+}

@@ -1,3 +1,6 @@
+/* 
+// Synchronous phytics implementation:
+
 import { Vector3 } from 'three';
 import throttle from 'lodash/throttle';
 
@@ -467,3 +470,4 @@ class Physics {
 const physicsInstance = new Physics();
 
 export default physicsInstance;
+*/

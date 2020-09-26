@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "watchify src/bootstrap.js -o build/bundle.js -dv -p livereactload & serve ./"
+    "start": "watchify src/bootstrap.js -o build/bundle.js -dv -p livereactload & serve ./",
+    "recompile:worker": "watchify ./lib/physics-worker.js -o ./lib/physics-worker.compiled.js -dv"
   },
   "browserify": {
     "transform": [

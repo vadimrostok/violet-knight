@@ -33,7 +33,6 @@ class ControlEventsHandler {
     down: false,
     left: false,
     right: false,
-    help: false,
   }
   actionFlags = {
     toggleGravity: false,
@@ -41,6 +40,9 @@ class ControlEventsHandler {
     punchControlsActive: false,
     showPunchControls: false,
     hidePunchControls: false,
+    help: false,
+    freeze: false,
+    restart: false,
   }
   touch = {
     isTouching: false,
@@ -141,48 +143,54 @@ class ControlEventsHandler {
     
     window.addEventListener( 'keydown', ( event ) => {
       switch ( event.keyCode ) {
-        case 32:// space
-          if (!event.repeat) {
-            this.actionFlags.showPunchControls = true;
-            this.actionFlags.punchControlsActive = true;
-          }
-          break;
-        case 71 && !event.repeat://g
-          this.actionFlags.toggleGravity = !this.actionFlags.toggleGravity;
-          break;
-        case 65://a
-          this.cameraBallJointRotationFlags.left = true;
-          break;
-        case 68://d
-          this.cameraBallJointRotationFlags.right = true;
-          break;
-        case 87://w
-          this.cameraBallJointRotationFlags.up = true;
-          break;
-        case 83://s
-          this.cameraBallJointRotationFlags.down = true;
-          break;
-        case 81://q
-          this.cameraBallJointRotationFlags.rollUp = true;
-          break;
-        case 69://e
-          this.cameraBallJointRotationFlags.rollDown = true;
-          break;
-        case 38://up
-          this.pushFlags.up = true;
-          break;
-        case 40://down
-          this.pushFlags.down = true;
-          break;
-        case 37://left
-          this.pushFlags.left = true;
-          break;
-        case 39://right
-          this.pushFlags.right = true;
-          break;
-        case 72://h for help
-          this.pushFlags.help = true;
-          break;
+      case 32:// space
+        if (!event.repeat) {
+          this.actionFlags.showPunchControls = true;
+          this.actionFlags.punchControlsActive = true;
+        }
+        break;
+      case 71 && !event.repeat://g
+        this.actionFlags.toggleGravity = !this.actionFlags.toggleGravity;
+        break;
+      case 65://a
+        this.cameraBallJointRotationFlags.left = true;
+        break;
+      case 68://d
+        this.cameraBallJointRotationFlags.right = true;
+        break;
+      case 87://w
+        this.cameraBallJointRotationFlags.up = true;
+        break;
+      case 83://s
+        this.cameraBallJointRotationFlags.down = true;
+        break;
+      case 81://q
+        this.cameraBallJointRotationFlags.rollUp = true;
+        break;
+      case 69://e
+        this.cameraBallJointRotationFlags.rollDown = true;
+        break;
+      case 38://up
+        this.pushFlags.up = true;
+        break;
+      case 40://down
+        this.pushFlags.down = true;
+        break;
+      case 37://left
+        this.pushFlags.left = true;
+        break;
+      case 39://right
+        this.pushFlags.right = true;
+        break;
+      case 72://h for help
+        this.actionFlags.help = true;
+        break;
+      case 70://f for freeze
+        this.actionFlags.freeze = true;
+        break;
+      case 82://r for restart
+        // this.actionFlags.restart = true;
+        break;
       }
       this.updateInfo();
     }, false);
