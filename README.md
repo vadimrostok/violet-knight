@@ -1,5 +1,7 @@
 # Violet knight
 
+Check it out: https://vadimrostok.github.io/violet-knight/
+
 3d browser game, based on Three.js and Ammo, meant to be an exercise and a fun pet project.
 
 ### Building:
